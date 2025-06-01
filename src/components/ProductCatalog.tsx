@@ -9,7 +9,6 @@ export const ProductCatalog = () => {
   const { products, loadProducts } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
-  const [selectedBrand, setSelectedBrand] = useState("Todas");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000]);
   const [sortBy, setSortBy] = useState("relevance");
   const [showInStock, setShowInStock] = useState(false);
@@ -22,11 +21,10 @@ export const ProductCatalog = () => {
     let filtered = products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
-      const matchesBrand = selectedBrand === "Todas" || product.brand === selectedBrand;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       const matchesStock = !showInStock || product.inStock;
 
-      return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesStock;
+      return matchesSearch && matchesCategory && matchesPrice && matchesStock;
     });
 
     // Ordenação
@@ -37,9 +35,6 @@ export const ProductCatalog = () => {
       case "price-desc":
         filtered.sort((a, b) => b.price - a.price);
         break;
-      case "rating":
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
       case "name":
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
@@ -49,7 +44,7 @@ export const ProductCatalog = () => {
     }
 
     return filtered;
-  }, [products, searchTerm, selectedCategory, selectedBrand, priceRange, sortBy, showInStock]);
+  }, [products, searchTerm, selectedCategory, priceRange, sortBy, showInStock]);
 
   return (
     <section id="produtos" className="py-20 px-4 bg-black">
@@ -82,8 +77,6 @@ export const ProductCatalog = () => {
                 setSearchTerm={setSearchTerm}
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
-                selectedBrand={selectedBrand}
-                setSelectedBrand={setSelectedBrand}
                 priceRange={priceRange}
                 setPriceRange={setPriceRange}
                 sortBy={sortBy}

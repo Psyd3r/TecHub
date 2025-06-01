@@ -22,16 +22,12 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
-  const { addItem, getProductStock, items } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
   
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
-
-  const currentStock = getProductStock(product.id);
-  const inCartQuantity = items.find(item => item.id === product.id)?.quantity || 0;
-  const availableStock = currentStock - inCartQuantity;
 
   const handleCardClick = () => {
     navigate(`/produto/${product.id}`);
@@ -39,7 +35,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (product.inStock && availableStock > 0) {
+    if (product.inStock) {
       const success = addItem(product);
       if (success) {
         toast({
@@ -56,19 +52,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
-  const getStockMessage = () => {
-    if (!product.inStock || currentStock === 0) return "Fora de Estoque";
-    if (availableStock === 0) return "Sem estoque disponível";
-    if (availableStock <= 3) return `Apenas ${availableStock} restantes`;
-    return `${currentStock} em estoque`;
-  };
-
-  const getStockColor = () => {
-    if (!product.inStock || availableStock === 0) return "text-red-400";
-    if (availableStock <= 3) return "text-yellow-400";
-    return "text-green-400";
-  };
-
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 bg-gray-900/50 border-gray-800 overflow-hidden cursor-pointer" onClick={handleCardClick}>
       <div className="relative">
@@ -82,7 +65,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             -{discount}%
           </div>
         )}
-        {(!product.inStock || availableStock === 0) && (
+        {!product.inStock && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <span className="text-white font-semibold">Fora de Estoque</span>
           </div>
@@ -99,13 +82,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <h3 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-[#4ADE80] transition-colors">
           {product.name}
         </h3>
-
-        {/* Informações de Estoque */}
-        <div className="mb-2">
-          <span className={`text-xs font-medium ${getStockColor()}`}>
-            {getStockMessage()}
-          </span>
-        </div>
         
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-[#4ADE80]">
@@ -122,14 +98,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <CardFooter className="p-4 pt-0">
         <button 
           className={`w-full py-2 rounded-lg font-medium transition-all duration-300 ${
-            product.inStock && availableStock > 0
+            product.inStock
               ? 'bg-[#4ADE80] text-black hover:bg-[#22C55E] hover:scale-105'
               : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
-          disabled={!product.inStock || availableStock === 0}
+          disabled={!product.inStock}
           onClick={handleAddToCart}
         >
-          {product.inStock && availableStock > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}
+          {product.inStock ? 'Adicionar ao Carrinho' : 'Indisponível'}
         </button>
       </CardFooter>
     </Card>

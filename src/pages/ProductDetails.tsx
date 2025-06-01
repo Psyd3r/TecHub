@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
@@ -80,7 +80,7 @@ const ProductDetails = () => {
           {/* Imagem do Produto */}
           <div className="relative">
             <img 
-              src={`https://images.unsplash.com/${product.image}?w=600&h=400&fit=crop`}
+              src={product.image.startsWith('http') ? product.image : `https://images.unsplash.com/${product.image}?w=600&h=400&fit=crop`}
               alt={product.name}
               className="w-full h-96 lg:h-[500px] object-cover rounded-lg"
             />
@@ -107,19 +107,6 @@ const ProductDetails = () => {
               <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4">
                 {product.name}
               </h1>
-              
-              {/* Avaliação */}
-              <div className="flex items-center mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`h-5 w-5 ${i < product.rating ? 'text-yellow-400 fill-current' : 'text-gray-600'}`}
-                    />
-                  ))}
-                  <span className="text-gray-400 ml-2">({product.rating}/5)</span>
-                </div>
-              </div>
 
               {/* Preços */}
               <div className="flex items-center gap-4 mb-6">
