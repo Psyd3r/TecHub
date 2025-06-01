@@ -9,7 +9,171 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      addresses: {
+        Row: {
+          cep: string
+          city: string
+          complement: string | null
+          country: string
+          created_at: string
+          id: string
+          is_default: boolean | null
+          neighborhood: string
+          number: string
+          state: string
+          street: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cep: string
+          city: string
+          complement?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          neighborhood: string
+          number: string
+          state: string
+          street: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cep?: string
+          city?: string
+          complement?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          neighborhood?: string
+          number?: string
+          state?: string
+          street?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          card_name: string
+          card_number_last4: string
+          created_at: string
+          expiry_date: string
+          id: string
+          is_default: boolean | null
+          payment_method_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_name: string
+          card_number_last4: string
+          created_at?: string
+          expiry_date: string
+          id?: string
+          is_default?: boolean | null
+          payment_method_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_name?: string
+          card_number_last4?: string
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          is_default?: boolean | null
+          payment_method_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          brand: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          in_stock: boolean | null
+          name: string
+          original_price: number | null
+          price: number
+          rating: number | null
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          in_stock?: boolean | null
+          name: string
+          original_price?: number | null
+          price: number
+          rating?: number | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          in_stock?: boolean | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          rating?: number | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          birth_date: string | null
+          cpf: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          cpf?: string | null
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          cpf?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

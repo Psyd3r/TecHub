@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ShoppingBag, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "@/contexts/CartContext";
+import { AuthButton } from "./AuthButton";
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -23,10 +25,6 @@ export const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleLogin = () => {
-    navigate("/login");
-  };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -79,12 +77,8 @@ export const Navbar = () => {
           {/* Cart */}
           <CartDrawer />
           
-          <Button 
-            onClick={handleLogin}
-            className="button-gradient text-white font-medium px-6 py-2 rounded-full hover:scale-105 transition-transform duration-200"
-          >
-            Entrar
-          </Button>
+          {/* Auth Button */}
+          <AuthButton />
         </div>
 
         {/* Mobile Menu */}
@@ -139,12 +133,7 @@ export const Navbar = () => {
                 </div>
                 
                 <div className="px-4 pt-4 border-t border-white/10">
-                  <Button 
-                    onClick={handleLogin}
-                    className="button-gradient text-white font-medium w-full py-3 rounded-full hover:scale-105 transition-transform duration-200"
-                  >
-                    Entrar
-                  </Button>
+                  <AuthButton />
                 </div>
               </div>
             </SheetContent>

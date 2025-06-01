@@ -1,16 +1,8 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-  brand: string;
-}
-
-export interface Product {
+interface Product {
   id: number;
   name: string;
   price: number;
@@ -23,210 +15,105 @@ export interface Product {
   stockQuantity: number;
 }
 
+export interface CartItem extends Product {
+  quantity: number;
+}
+
 interface CartContextType {
   items: CartItem[];
   products: Product[];
-  addItem: (product: any) => boolean;
-  removeItem: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => boolean;
+  addItem: (product: Product) => boolean;
+  removeItem: (productId: number) => void;
+  updateQuantity: (productId: number, quantity: number) => boolean;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
-  getProductStock: (id: number) => number;
-  updateStock: (id: number, quantity: number) => void;
+  getProductStock: (productId: number) => number;
+  updateStock: (productId: number, newStock: number) => void;
+  loadProducts: () => void;
   processOrder: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
-
-interface CartProviderProps {
-  children: ReactNode;
-}
-
-// Dados mockados de produtos com estoque
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    name: "MacBook Pro 16\" M3 Pro",
-    price: 15999,
-    originalPrice: 17999,
-    image: "photo-1486312338219-ce68d2c6f44d",
-    category: "Laptops",
-    brand: "Apple",
-    rating: 5,
-    inStock: true,
-    stockQuantity: 5
-  },
-  {
-    id: 2,
-    name: "Dell XPS 13 Plus",
-    price: 8999,
-    originalPrice: 9999,
-    image: "photo-1488590528505-98d2b5aba04b",
-    category: "Laptops",
-    brand: "Dell",
-    rating: 4,
-    inStock: true,
-    stockQuantity: 8
-  },
-  {
-    id: 3,
-    name: "Samsung Galaxy S24 Ultra",
-    price: 6999,
-    image: "photo-1581091226825-a6a2a5aee158",
-    category: "Smartphones",
-    brand: "Samsung",
-    rating: 5,
-    inStock: false,
-    stockQuantity: 0
-  },
-  {
-    id: 4,
-    name: "iPad Pro 12.9\" M2",
-    price: 9999,
-    originalPrice: 11999,
-    image: "photo-1649972904349-6e44c42644a7",
-    category: "Tablets",
-    brand: "Apple",
-    rating: 5,
-    inStock: true,
-    stockQuantity: 3
-  },
-  {
-    id: 5,
-    name: "Lenovo ThinkPad X1 Carbon",
-    price: 12999,
-    image: "photo-1518770660439-4636190af475",
-    category: "Laptops",
-    brand: "Lenovo",
-    rating: 4,
-    inStock: true,
-    stockQuantity: 12
-  },
-  {
-    id: 6,
-    name: "HP Spectre x360",
-    price: 7999,
-    originalPrice: 8999,
-    image: "photo-1488590528505-98d2b5aba04b",
-    category: "Laptops",
-    brand: "HP",
-    rating: 4,
-    inStock: true,
-    stockQuantity: 7
-  },
-  {
-    id: 7,
-    name: "iPhone 15 Pro Max",
-    price: 8999,
-    image: "photo-1581091226825-a6a2a5aee158",
-    category: "Smartphones",
-    brand: "Apple",
-    rating: 5,
-    inStock: true,
-    stockQuantity: 15
-  },
-  {
-    id: 8,
-    name: "Samsung Galaxy Tab S9 Ultra",
-    price: 5999,
-    originalPrice: 6499,
-    image: "photo-1649972904349-6e44c42644a7",
-    category: "Tablets",
-    brand: "Samsung",
-    rating: 4,
-    inStock: false,
-    stockQuantity: 0
-  }
-];
-
-export const CartProvider = ({ children }: CartProviderProps) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
 
-  const getProductStock = (id: number): number => {
-    const product = products.find(p => p.id === id);
-    return product ? product.stockQuantity : 0;
-  };
-
-  const updateStock = (id: number, newQuantity: number) => {
-    setProducts(prev => prev.map(product => 
-      product.id === id 
-        ? { 
-            ...product, 
-            stockQuantity: newQuantity,
-            inStock: newQuantity > 0 
-          }
-        : product
-    ));
-  };
-
-  const addItem = (product: any): boolean => {
-    const currentStock = getProductStock(product.id);
-    const currentInCart = items.find(item => item.id === product.id)?.quantity || 0;
-    
-    if (currentStock <= currentInCart) {
-      return false; // Não há estoque suficiente
-    }
-
-    setItems(prev => {
-      const existingItem = prev.find(item => item.id === product.id);
-      if (existingItem) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, {
-        id: product.id,
+  const loadProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('in_stock', true);
+      
+      if (error) throw error;
+      
+      const formattedProducts = (data || []).map(product => ({
+        id: parseInt(product.id),
         name: product.name,
         price: product.price,
-        image: product.image,
-        quantity: 1,
-        brand: product.brand
-      }];
-    });
+        originalPrice: product.original_price || undefined,
+        image: product.image || 'photo-1581091226825-a6a2a5aee158',
+        category: product.category,
+        brand: product.brand,
+        rating: product.rating || 0,
+        inStock: product.in_stock || false,
+        stockQuantity: product.stock_quantity,
+      }));
+      
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
+      setProducts([]);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const addItem = (product: Product): boolean => {
+    const existingItem = items.find(item => item.id === product.id);
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+    
+    if (currentQuantity >= product.stockQuantity) {
+      return false;
+    }
+
+    if (existingItem) {
+      setItems(items.map(item =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ));
+    } else {
+      setItems([...items, { ...product, quantity: 1 }]);
+    }
     return true;
   };
 
-  const removeItem = (id: number) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+  const removeItem = (productId: number) => {
+    setItems(items.filter(item => item.id !== productId));
   };
 
-  const updateQuantity = (id: number, quantity: number): boolean => {
+  const updateQuantity = (productId: number, quantity: number): boolean => {
     if (quantity <= 0) {
-      removeItem(id);
+      removeItem(productId);
       return true;
     }
 
-    const currentStock = getProductStock(id);
-    if (quantity > currentStock) {
-      return false; // Não há estoque suficiente
+    const product = products.find(p => p.id === productId);
+    if (product && quantity > product.stockQuantity) {
+      return false;
     }
 
-    setItems(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
-    );
+    setItems(items.map(item =>
+      item.id === productId
+        ? { ...item, quantity }
+        : item
+    ));
     return true;
-  };
-
-  const processOrder = () => {
-    // Atualizar estoque baseado nos itens do carrinho
-    items.forEach(item => {
-      const currentStock = getProductStock(item.id);
-      updateStock(item.id, currentStock - item.quantity);
-    });
   };
 
   const clearCart = () => {
@@ -241,21 +128,75 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     return items.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+  const getProductStock = (productId: number) => {
+    const product = products.find(p => p.id === productId);
+    return product ? product.stockQuantity : 0;
+  };
+
+  const updateStock = async (productId: number, newStock: number) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ stock_quantity: newStock })
+        .eq('id', productId.toString());
+      
+      if (error) throw error;
+      
+      // Atualizar estado local
+      setProducts(products.map(product =>
+        product.id === productId
+          ? { ...product, stockQuantity: newStock, inStock: newStock > 0 }
+          : product
+      ));
+      
+      // Atualizar itens do carrinho se necessário
+      setItems(items.map(item => {
+        if (item.id === productId) {
+          const newQuantity = Math.min(item.quantity, newStock);
+          return { ...item, quantity: newQuantity, stockQuantity: newStock, inStock: newStock > 0 };
+        }
+        return item;
+      }).filter(item => item.quantity > 0));
+      
+    } catch (error) {
+      console.error('Erro ao atualizar estoque:', error);
+    }
+  };
+
+  const processOrder = async () => {
+    // Processar pedido: reduzir estoque dos produtos
+    for (const item of items) {
+      const newStock = item.stockQuantity - item.quantity;
+      await updateStock(item.id, newStock);
+    }
+  };
+
+  const value = {
+    items,
+    products,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    getTotalItems,
+    getTotalPrice,
+    getProductStock,
+    updateStock,
+    loadProducts,
+    processOrder
+  };
+
   return (
-    <CartContext.Provider value={{
-      items,
-      products,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
-      getTotalItems,
-      getTotalPrice,
-      getProductStock,
-      updateStock,
-      processOrder
-    }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 };

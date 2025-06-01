@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +13,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Package } from "lucide-react";
 
 export const StockTable = () => {
-  const { products, updateStock } = useCart();
+  const { products, updateStock, loadProducts } = useCart();
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>("");
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   const handleEditStart = (productId: number, currentStock: number) => {
     setEditingId(productId);
@@ -57,6 +61,18 @@ export const StockTable = () => {
     if (stock <= 3) return { label: "Baixo Estoque", variant: "outline" as const };
     return { label: "Em Estoque", variant: "default" as const };
   };
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-white mb-2">Nenhum produto para gerenciar</h3>
+        <p className="text-gray-400">
+          Crie produtos primeiro na aba "Produtos" para gerenciar o estoque.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border border-gray-700">

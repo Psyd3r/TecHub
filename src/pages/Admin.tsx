@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, Archive } from "lucide-react";
 import { StockTable } from "@/components/StockTable";
+import { ProductManagement } from "@/components/ProductManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -30,18 +32,37 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Controle de Estoque */}
-        <Card className="bg-[#1B1B1B]/90 backdrop-blur-xl border border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white text-2xl flex items-center gap-2">
-              <Package className="h-6 w-6 text-[#4ADE80]" />
+        {/* Tabs para diferentes seções */}
+        <Tabs defaultValue="products" className="space-y-6">
+          <TabsList className="bg-[#1B1B1B]/90 border border-white/10">
+            <TabsTrigger value="products" className="text-white data-[state=active]:bg-[#4ADE80] data-[state=active]:text-black">
+              <Package className="h-4 w-4 mr-2" />
+              Produtos
+            </TabsTrigger>
+            <TabsTrigger value="stock" className="text-white data-[state=active]:bg-[#4ADE80] data-[state=active]:text-black">
+              <Archive className="h-4 w-4 mr-2" />
               Controle de Estoque
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StockTable />
-          </CardContent>
-        </Card>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="products">
+            <ProductManagement />
+          </TabsContent>
+
+          <TabsContent value="stock">
+            <Card className="bg-[#1B1B1B]/90 backdrop-blur-xl border border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl flex items-center gap-2">
+                  <Archive className="h-6 w-6 text-[#4ADE80]" />
+                  Controle de Estoque
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StockTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
