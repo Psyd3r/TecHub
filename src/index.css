@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,5 +98,11 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .button-gradient {
+    @apply bg-gradient-to-r from-[#4ADE80] to-[#22C55E] hover:from-[#22C55E] hover:to-[#16A34A];
   }
 }
