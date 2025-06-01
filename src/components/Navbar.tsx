@@ -1,17 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { ShoppingBag, Menu } from "lucide-react";
+import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "@/contexts/CartContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { AuthButton } from "./AuthButton";
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getTotalItems } = useCart();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
 
   const cartItems = getTotalItems();
@@ -52,7 +54,7 @@ export const Navbar = () => {
       <div className="flex items-center justify-between h-full px-6">
         {/* Logo */}
         <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-          <ShoppingBag className="h-6 w-6 text-[#4ADE80]" />
+          <ShoppingCart className="h-6 w-6 text-[#4ADE80]" />
           <span className="text-xl font-bold text-white">TechHub</span>
         </div>
 
@@ -70,6 +72,14 @@ export const Navbar = () => {
           >
             Produtos
           </button>
+          {isAdmin && (
+            <button 
+              onClick={() => navigate('/admin')}
+              className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
+            >
+              Admin
+            </button>
+          )}
         </div>
 
         {/* Desktop Actions */}
@@ -99,7 +109,7 @@ export const Navbar = () => {
             >
               <div className="flex flex-col space-y-6 mt-8">
                 <div className="flex items-center space-x-2 px-4">
-                  <ShoppingBag className="h-6 w-6 text-[#4ADE80]" />
+                  <ShoppingCart className="h-6 w-6 text-[#4ADE80]" />
                   <span className="text-xl font-bold text-white">TechHub</span>
                 </div>
                 
@@ -117,12 +127,20 @@ export const Navbar = () => {
                   >
                     Produtos
                   </button>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => navigate('/admin')}
+                      className="text-left text-white/80 hover:text-white transition-colors duration-200 font-medium py-2"
+                    >
+                      Admin
+                    </button>
+                  )}
                   
                   {/* Mobile Cart */}
                   <div className="flex items-center justify-between text-white/80 hover:text-white transition-colors duration-200 font-medium py-2">
                     <span>Carrinho</span>
                     <div className="relative">
-                      <ShoppingBag className="h-5 w-5" />
+                      <ShoppingCart className="h-5 w-5" />
                       {cartItems > 0 && (
                         <span className="absolute -top-2 -right-2 bg-[#4ADE80] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
                           {cartItems}

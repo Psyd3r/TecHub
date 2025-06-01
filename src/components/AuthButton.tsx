@@ -1,16 +1,25 @@
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogIn, LogOut, User } from "lucide-react";
+import { LogIn, LogOut, User, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const AuthButton = () => {
   const navigate = useNavigate();
   const { user, signOut, loading } = useAuth();
+  const { isAdmin } = useUserRole();
   const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<any>(null);
 
@@ -70,25 +79,55 @@ export const AuthButton = () => {
     return (
       <div className="flex items-center gap-2">
         <div className="hidden md:flex items-center gap-2">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-[#4ADE80] text-black text-sm font-semibold">
-              {userInitials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-white text-sm font-medium">
-            Olá, {userName}
-          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-white/10">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-[#4ADE80] text-black text-sm font-semibold">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium">
+                  Olá, {userName}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-[#1B1B1B] border-white/10">
+              {isAdmin && (
+                <>
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/admin")}
+                    className="text-white hover:bg-white/10 cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Painel Administrativo
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                </>
+              )}
+              <DropdownMenuItem 
+                onClick={handleSignOut}
+                className="text-white hover:bg-white/10 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
-        <Button 
-          variant="ghost" 
-          onClick={handleSignOut}
-          className="text-white hover:bg-white/10"
-          size="sm"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sair
-        </Button>
+        {/* Mobile version */}
+        <div className="md:hidden">
+          <Button 
+            variant="ghost" 
+            onClick={handleSignOut}
+            className="text-white hover:bg-white/10"
+            size="sm"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </Button>
+        </div>
       </div>
     );
   }

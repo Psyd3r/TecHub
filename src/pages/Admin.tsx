@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, Archive } from "lucide-react";
 import { StockTable } from "@/components/StockTable";
 import { ProductManagement } from "@/components/ProductManagement";
+import { AdminRoute } from "@/components/AdminRoute";
 
-const Admin = () => {
+const AdminContent = () => {
   const navigate = useNavigate();
 
   return (
@@ -65,6 +66,14 @@ const Admin = () => {
         </Tabs>
       </div>
     </div>
+  );
+};
+
+const Admin = () => {
+  return (
+    <AdminRoute>
+      <AdminContent />
+    </AdminRoute>
   );
 };
 

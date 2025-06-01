@@ -26,7 +26,6 @@ interface Product {
   image?: string;
   category: string;
   brand: string;
-  rating?: number;
   stock_quantity: number;
   in_stock: boolean;
 }
@@ -179,7 +178,7 @@ export const ProductManagement = () => {
                         <div className="flex items-center gap-3">
                           {product.image && (
                             <img
-                              src={`https://images.unsplash.com/${product.image}?w=50&h=50&fit=crop`}
+                              src={product.image.startsWith('http') ? product.image : `https://images.unsplash.com/${product.image}?w=50&h=50&fit=crop`}
                               alt={product.name}
                               className="w-10 h-10 rounded-md object-cover"
                             />

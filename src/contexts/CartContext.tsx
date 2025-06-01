@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,7 +9,6 @@ interface Product {
   image: string;
   category: string;
   brand: string;
-  rating: number;
   inStock: boolean;
   stockQuantity: number;
 }
@@ -57,7 +55,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         image: product.image || 'photo-1581091226825-a6a2a5aee158',
         category: product.category,
         brand: product.brand,
-        rating: product.rating || 0,
         inStock: product.in_stock || false,
         stockQuantity: product.stock_quantity,
       }));

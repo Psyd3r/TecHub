@@ -1,13 +1,13 @@
 
 import { Navbar } from "@/components/Navbar";
-import { HeroSection } from "@/components/HeroSection";
+import { HeroSectionNew } from "@/components/HeroSectionNew";
 import { ProductCatalog } from "@/components/ProductCatalog";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
-      <HeroSection />
+      <HeroSectionNew />
       <ProductCatalog />
     </div>
   );

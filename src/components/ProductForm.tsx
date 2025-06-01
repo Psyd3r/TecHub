@@ -17,7 +17,6 @@ interface Product {
   image?: string;
   category: string;
   brand: string;
-  rating?: number;
   stock_quantity: number;
 }
 
@@ -28,11 +27,11 @@ interface ProductFormProps {
 }
 
 const categories = ["Smartphones", "Notebooks", "Tablets", "Acessórios", "Smartwatches"];
-const brands = ["Apple", "Samsung", "Xiaomi", "Dell", "HP", "Lenovo", "Asus"];
 
 export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Product>({
     name: product?.name || "",
     price: product?.price || 0,
@@ -41,7 +40,6 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
     image: product?.image || "",
     category: product?.category || "",
     brand: product?.brand || "",
-    rating: product?.rating || 0,
     stock_quantity: product?.stock_quantity || 0,
   });
 
@@ -50,11 +48,38 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
     setLoading(true);
 
     try {
+      let imageUrl = formData.image;
+
+      // Upload da imagem se uma nova foi selecionada
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `products/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
+      const productData = {
+        ...formData,
+        image: imageUrl,
+        in_stock: formData.stock_quantity > 0
+      };
+
       if (product?.id) {
         // Atualizar produto existente
         const { error } = await supabase
           .from('products')
-          .update(formData)
+          .update(productData)
           .eq('id', product.id);
         
         if (error) throw error;
@@ -67,7 +92,7 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
         // Criar novo produto
         const { error } = await supabase
           .from('products')
-          .insert([formData]);
+          .insert([productData]);
         
         if (error) throw error;
         
@@ -97,6 +122,13 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -113,16 +145,14 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
         
         <div>
           <Label htmlFor="brand" className="text-white">Marca</Label>
-          <Select value={formData.brand} onValueChange={(value) => handleInputChange('brand', value)}>
-            <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-              <SelectValue placeholder="Selecione uma marca" />
-            </SelectTrigger>
-            <SelectContent>
-              {brands.map((brand) => (
-                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            id="brand"
+            value={formData.brand}
+            onChange={(e) => handleInputChange('brand', e.target.value)}
+            className="bg-gray-800 border-gray-600 text-white"
+            placeholder="Digite a marca do produto"
+            required
+          />
         </div>
         
         <div>
@@ -176,29 +206,24 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
           />
         </div>
         
-        <div>
-          <Label htmlFor="rating" className="text-white">Avaliação (0-5)</Label>
-          <Input
-            id="rating"
-            type="number"
-            step="0.1"
-            min="0"
-            max="5"
-            value={formData.rating || ""}
-            onChange={(e) => handleInputChange('rating', e.target.value ? parseFloat(e.target.value) : 0)}
-            className="bg-gray-800 border-gray-600 text-white"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="image" className="text-white">URL da Imagem</Label>
+        <div className="md:col-span-2">
+          <Label htmlFor="image" className="text-white">Imagem do Produto</Label>
           <Input
             id="image"
-            value={formData.image || ""}
-            onChange={(e) => handleInputChange('image', e.target.value)}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
             className="bg-gray-800 border-gray-600 text-white"
-            placeholder="ID da imagem do Unsplash"
           />
+          {formData.image && !imageFile && (
+            <div className="mt-2">
+              <img
+                src={formData.image}
+                alt="Preview"
+                className="w-20 h-20 object-cover rounded-md"
+              />
+            </div>
+          )}
         </div>
       </div>
       

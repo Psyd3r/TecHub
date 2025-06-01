@@ -12,7 +12,6 @@ interface Product {
   image: string;
   category: string;
   brand: string;
-  rating: number;
   inStock: boolean;
   stockQuantity: number;
 }
@@ -58,7 +57,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const getStockMessage = () => {
-    if (!product.inStock) return "Fora de Estoque";
+    if (!product.inStock || currentStock === 0) return "Fora de Estoque";
     if (availableStock === 0) return "Sem estoque disponível";
     if (availableStock <= 3) return `Apenas ${availableStock} restantes`;
     return `${currentStock} em estoque`;
@@ -74,7 +73,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     <Card className="group hover:shadow-lg transition-all duration-300 bg-gray-900/50 border-gray-800 overflow-hidden cursor-pointer" onClick={handleCardClick}>
       <div className="relative">
         <img 
-          src={`https://images.unsplash.com/${product.image}?w=400&h=300&fit=crop`}
+          src={product.image.startsWith('http') ? product.image : `https://images.unsplash.com/${product.image}?w=400&h=300&fit=crop`}
           alt={product.name}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -100,20 +99,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <h3 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-[#4ADE80] transition-colors">
           {product.name}
         </h3>
-        
-        <div className="flex items-center mb-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <span 
-                key={i} 
-                className={`text-xs ${i < product.rating ? 'text-yellow-400' : 'text-gray-600'}`}
-              >
-                ★
-              </span>
-            ))}
-            <span className="text-xs text-gray-400 ml-1">({product.rating}/5)</span>
-          </div>
-        </div>
 
         {/* Informações de Estoque */}
         <div className="mb-2">
