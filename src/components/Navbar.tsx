@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Store, Menu } from "lucide-react";
+import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +34,7 @@ export const Navbar = () => {
       <div className="flex items-center justify-between h-full px-6">
         {/* Logo */}
         <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-          <Store className="h-6 w-6 text-[#4ADE80]" />
+          <ShoppingCart className="h-6 w-6 text-[#4ADE80]" />
           <span className="text-xl font-bold text-white">TechHub</span>
         </div>
 
@@ -67,7 +66,7 @@ export const Navbar = () => {
             >
               <div className="flex flex-col space-y-6 mt-8">
                 <div className="flex items-center space-x-2 px-4">
-                  <Store className="h-6 w-6 text-[#4ADE80]" />
+                  <ShoppingCart className="h-6 w-6 text-[#4ADE80]" />
                   <span className="text-xl font-bold text-white">TechHub</span>
                 </div>
                 
