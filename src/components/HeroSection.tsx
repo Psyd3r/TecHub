@@ -1,9 +1,18 @@
-
 import { TextGenerateEffect } from "./TextGenerateEffect";
 
 export const HeroSection = () => {
+  const scrollToProducts = () => {
+    const element = document.getElementById('produtos');
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
+    <section id="home" className="relative min-h-screen flex items-center justify-center px-4 py-20">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
       
@@ -37,7 +46,10 @@ export const HeroSection = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="button-gradient text-white font-semibold px-8 py-4 rounded-full hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-[#4ADE80]/25">
+          <button 
+            onClick={scrollToProducts}
+            className="button-gradient text-white font-semibold px-8 py-4 rounded-full hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-[#4ADE80]/25"
+          >
             Explorar Produtos
           </button>
           <button className="border border-white/20 text-white font-medium px-8 py-4 rounded-full hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">

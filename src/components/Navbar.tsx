@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [cartItems, setCartItems] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,8 +21,23 @@ export const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleCreateAccount = () => {
-    navigate("/signup");
+  const handleLogin = () => {
+    navigate("/login");
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+    setIsMobileMenuOpen(false);
+  };
+
+  const scrollToProducts = () => {
+    scrollToSection('produtos');
   };
 
   return (
@@ -38,13 +55,39 @@ export const Navbar = () => {
           <span className="text-xl font-bold text-white">TechHub</span>
         </div>
 
-        {/* Desktop CTA Button */}
-        <div className="hidden md:block">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          <button 
+            onClick={() => scrollToSection('home')}
+            className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
+          >
+            Início
+          </button>
+          <button 
+            onClick={scrollToProducts}
+            className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
+          >
+            Produtos
+          </button>
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="hidden md:flex items-center space-x-4">
+          {/* Cart */}
+          <button className="relative p-2 text-white/80 hover:text-white transition-colors duration-200">
+            <ShoppingCart className="h-5 w-5" />
+            {cartItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#4ADE80] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                {cartItems}
+              </span>
+            )}
+          </button>
+          
           <Button 
-            onClick={handleCreateAccount}
+            onClick={handleLogin}
             className="button-gradient text-white font-medium px-6 py-2 rounded-full hover:scale-105 transition-transform duration-200"
           >
-            Criar Conta
+            Entrar
           </Button>
         </div>
 
@@ -70,12 +113,41 @@ export const Navbar = () => {
                   <span className="text-xl font-bold text-white">TechHub</span>
                 </div>
                 
-                <div className="px-4 pt-4">
+                {/* Mobile Navigation Links */}
+                <div className="flex flex-col space-y-4 px-4">
+                  <button 
+                    onClick={() => scrollToSection('home')}
+                    className="text-left text-white/80 hover:text-white transition-colors duration-200 font-medium py-2"
+                  >
+                    Início
+                  </button>
+                  <button 
+                    onClick={scrollToProducts}
+                    className="text-left text-white/80 hover:text-white transition-colors duration-200 font-medium py-2"
+                  >
+                    Produtos
+                  </button>
+                  
+                  {/* Mobile Cart */}
+                  <button className="flex items-center justify-between text-white/80 hover:text-white transition-colors duration-200 font-medium py-2">
+                    <span>Carrinho</span>
+                    <div className="relative">
+                      <ShoppingCart className="h-5 w-5" />
+                      {cartItems > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-[#4ADE80] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                          {cartItems}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                </div>
+                
+                <div className="px-4 pt-4 border-t border-white/10">
                   <Button 
-                    onClick={handleCreateAccount}
+                    onClick={handleLogin}
                     className="button-gradient text-white font-medium w-full py-3 rounded-full hover:scale-105 transition-transform duration-200"
                   >
-                    Criar Conta
+                    Entrar
                   </Button>
                 </div>
               </div>
