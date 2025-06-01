@@ -2,97 +2,10 @@
 import { useState, useMemo } from "react";
 import { ProductCard } from "./ProductCard";
 import { ProductFilters } from "./ProductFilters";
-
-// Dados mockados de produtos
-const mockProducts = [
-  {
-    id: 1,
-    name: "MacBook Pro 16\" M3 Pro",
-    price: 15999,
-    originalPrice: 17999,
-    image: "photo-1486312338219-ce68d2c6f44d",
-    category: "Laptops",
-    brand: "Apple",
-    rating: 5,
-    inStock: true
-  },
-  {
-    id: 2,
-    name: "Dell XPS 13 Plus",
-    price: 8999,
-    originalPrice: 9999,
-    image: "photo-1488590528505-98d2b5aba04b",
-    category: "Laptops",
-    brand: "Dell",
-    rating: 4,
-    inStock: true
-  },
-  {
-    id: 3,
-    name: "Samsung Galaxy S24 Ultra",
-    price: 6999,
-    image: "photo-1581091226825-a6a2a5aee158",
-    category: "Smartphones",
-    brand: "Samsung",
-    rating: 5,
-    inStock: false
-  },
-  {
-    id: 4,
-    name: "iPad Pro 12.9\" M2",
-    price: 9999,
-    originalPrice: 11999,
-    image: "photo-1649972904349-6e44c42644a7",
-    category: "Tablets",
-    brand: "Apple",
-    rating: 5,
-    inStock: true
-  },
-  {
-    id: 5,
-    name: "Lenovo ThinkPad X1 Carbon",
-    price: 12999,
-    image: "photo-1518770660439-4636190af475",
-    category: "Laptops",
-    brand: "Lenovo",
-    rating: 4,
-    inStock: true
-  },
-  {
-    id: 6,
-    name: "HP Spectre x360",
-    price: 7999,
-    originalPrice: 8999,
-    image: "photo-1488590528505-98d2b5aba04b",
-    category: "Laptops",
-    brand: "HP",
-    rating: 4,
-    inStock: true
-  },
-  {
-    id: 7,
-    name: "iPhone 15 Pro Max",
-    price: 8999,
-    image: "photo-1581091226825-a6a2a5aee158",
-    category: "Smartphones",
-    brand: "Apple",
-    rating: 5,
-    inStock: true
-  },
-  {
-    id: 8,
-    name: "Samsung Galaxy Tab S9 Ultra",
-    price: 5999,
-    originalPrice: 6499,
-    image: "photo-1649972904349-6e44c42644a7",
-    category: "Tablets",
-    brand: "Samsung",
-    rating: 4,
-    inStock: false
-  }
-];
+import { useCart } from "@/contexts/CartContext";
 
 export const ProductCatalog = () => {
+  const { products } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [selectedBrand, setSelectedBrand] = useState("Todas");
@@ -101,7 +14,7 @@ export const ProductCatalog = () => {
   const [showInStock, setShowInStock] = useState(false);
 
   const filteredProducts = useMemo(() => {
-    let filtered = mockProducts.filter(product => {
+    let filtered = products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
       const matchesBrand = selectedBrand === "Todas" || product.brand === selectedBrand;
@@ -131,7 +44,7 @@ export const ProductCatalog = () => {
     }
 
     return filtered;
-  }, [searchTerm, selectedCategory, selectedBrand, priceRange, sortBy, showInStock]);
+  }, [products, searchTerm, selectedCategory, selectedBrand, priceRange, sortBy, showInStock]);
 
   return (
     <section id="produtos" className="py-20 px-4 bg-black">
