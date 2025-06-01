@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: number;
@@ -18,12 +19,18 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const navigate = useNavigate();
+  
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
+  const handleCardClick = () => {
+    navigate(`/produto/${product.id}`);
+  };
+
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 bg-gray-900/50 border-gray-800 overflow-hidden">
+    <Card className="group hover:shadow-lg transition-all duration-300 bg-gray-900/50 border-gray-800 overflow-hidden cursor-pointer" onClick={handleCardClick}>
       <div className="relative">
         <img 
           src={`https://images.unsplash.com/${product.image}?w=400&h=300&fit=crop`}
@@ -87,6 +94,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
           disabled={!product.inStock}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Lógica do carrinho aqui
+          }}
         >
           {product.inStock ? 'Adicionar ao Carrinho' : 'Indisponível'}
         </button>

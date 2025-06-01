@@ -1,3 +1,7 @@
+
+import { motion } from "framer-motion";
+import { ArrowRight, ShoppingCart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { TextGenerateEffect } from "./TextGenerateEffect";
 
 export const HeroSection = () => {
@@ -12,9 +16,15 @@ export const HeroSection = () => {
   };
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center px-4 py-20">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+    <motion.section 
+      id="home"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="relative container px-4 pt-40 pb-20 min-h-screen bg-black text-foreground"
+    >
+      {/* Background */}
+      <div className="absolute inset-0 -z-10 bg-[#0A0A0A]" />
       
       {/* Grid Pattern Overlay */}
       <div 
@@ -32,38 +42,73 @@ export const HeroSection = () => {
       <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-[#4ADE80]/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-[#22C55E]/10 rounded-full blur-3xl animate-pulse delay-1000" />
       
-      {/* Content */}
-      <div className="relative z-10 text-center max-w-4xl mx-auto">
-        <div className="mb-8">
-          <TextGenerateEffect
-            words="Potência para quem exige performance."
-            className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-gray-100 to-[#4ADE80] bg-clip-text text-transparent leading-tight"
-          />
-        </div>
+      {/* Badge */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="inline-block mb-4 px-4 py-1.5 rounded-full glass"
+      >
+        <span className="text-sm font-medium">
+          <ShoppingCart className="w-4 h-4 inline-block mr-2" />
+          Loja de tecnologia premium
+        </span>
+      </motion.div>
+      
+      {/* Título Principal */}
+      <div className="max-w-4xl relative z-10">
+        <h1 className="text-5xl md:text-7xl font-normal mb-4 tracking-tight text-left">
+          <span className="text-gray-200">
+            <TextGenerateEffect words="Potência para quem" />
+          </span>
+          <br />
+          <span className="text-white font-medium">
+            <TextGenerateEffect words="exige performance" />
+          </span>
+        </h1>
         
-        <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
-          Descubra a nova era da tecnologia com produtos que combinam design elegante e desempenho excepcional.
-        </p>
+        {/* Subtítulo */}
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl text-left"
+        >
+          Descubra a nova era da tecnologia com produtos que combinam design elegante e desempenho excepcional.{" "}
+          <span className="text-white">Qualidade garantida em cada produto.</span>
+        </motion.p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button 
-            onClick={scrollToProducts}
+        {/* Botões CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-col sm:flex-row gap-4 items-start"
+        >
+          <Button 
+            size="lg" 
             className="button-gradient text-white font-semibold px-8 py-4 rounded-full hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-[#4ADE80]/25"
+            onClick={scrollToProducts}
           >
             Explorar Produtos
-          </button>
-          <button className="border border-white/20 text-white font-medium px-8 py-4 rounded-full hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
-            Saiba Mais
-          </button>
-        </div>
+          </Button>
+          <Button size="lg" variant="link" className="text-white">
+            Ver Ofertas <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        </motion.div>
       </div>
-      
+
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce"
+      >
         <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse" />
         </div>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 };

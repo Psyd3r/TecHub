@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { ProductCard } from "./ProductCard";
 import { ProductFilters } from "./ProductFilters";
@@ -133,7 +134,7 @@ export const ProductCatalog = () => {
   }, [searchTerm, selectedCategory, selectedBrand, priceRange, sortBy, showInStock]);
 
   return (
-    <section id="produtos" className="py-20 px-4 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <section id="produtos" className="py-20 px-4 bg-black">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
