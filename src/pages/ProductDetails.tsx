@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
+import { useCartStore } from "@/stores/CartStore";
 import { useProductDetails } from "@/hooks/useProductDetails";
 import { ProductImageGallery } from "@/components/ProductDetails/ProductImageGallery";
 import { ProductInfo } from "@/components/ProductDetails/ProductInfo";
@@ -15,7 +15,7 @@ import { ProductNotFound } from "@/components/ProductDetails/ProductNotFound";
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { items } = useCart();
+  const { items } = useCartStore();
   const { product, loading } = useProductDetails(id);
 
   if (loading) {

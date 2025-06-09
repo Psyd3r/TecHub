@@ -8,6 +8,7 @@ export interface CartItemModel {
   category: string;
   quantity: number;
   stockQuantity: number;
+  inStock: boolean;
 }
 
 export interface CartModel {

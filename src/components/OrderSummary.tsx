@@ -1,9 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CartItem } from "@/contexts/CartContext";
+import { CartItemModel } from "@/models/CartModel";
 
 interface OrderSummaryProps {
-  items: CartItem[];
+  items: CartItemModel[];
   total: number;
 }
 
@@ -11,6 +11,15 @@ export const OrderSummary = ({ items, total }: OrderSummaryProps) => {
   const subtotal = total;
   const shipping = total > 200 ? 0 : 29.90;
   const finalTotal = subtotal + shipping;
+
+  const getImageUrl = (image: string) => {
+    // Se a imagem já é uma URL completa, usar diretamente
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return image;
+    }
+    // Caso contrário, usar o padrão Unsplash
+    return `https://images.unsplash.com/${image}?w=60&h=60&fit=crop`;
+  };
 
   return (
     <Card className="bg-[#1B1B1B]/90 backdrop-blur-xl border border-white/10">
@@ -23,9 +32,13 @@ export const OrderSummary = ({ items, total }: OrderSummaryProps) => {
           {items.map((item) => (
             <div key={item.id} className="flex items-center gap-3 py-2 border-b border-gray-800 last:border-b-0">
               <img 
-                src={`https://images.unsplash.com/${item.image}?w=60&h=60&fit=crop`}
+                src={getImageUrl(item.image)}
                 alt={item.name}
                 className="w-12 h-12 object-cover rounded"
+                onError={(e) => {
+                  // Fallback para uma imagem padrão em caso de erro
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=60&h=60&fit=crop';
+                }}
               />
               <div className="flex-1">
                 <h4 className="text-white text-sm font-medium">{item.name}</h4>

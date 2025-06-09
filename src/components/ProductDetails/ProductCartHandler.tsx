@@ -1,5 +1,5 @@
 
-import { useCart } from "@/contexts/CartContext";
+import { useCartStore } from "@/stores/CartStore";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProductData {
@@ -24,10 +24,10 @@ interface ProductCartHandlerProps {
 }
 
 export const ProductCartHandler = ({ product, children }: ProductCartHandlerProps) => {
-  const { addItem, updateQuantity } = useCart();
+  const { addToCart, updateQuantity } = useCartStore();
   const { toast } = useToast();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product && product.stock_quantity > 0) {
       const productForCart = {
         id: parseInt(product.id),
@@ -42,7 +42,7 @@ export const ProductCartHandler = ({ product, children }: ProductCartHandlerProp
         stockQuantity: product.stock_quantity,
       };
 
-      const success = addItem(productForCart);
+      const success = await addToCart(productForCart);
       if (success) {
         toast({
           title: "Produto adicionado!",
@@ -58,9 +58,9 @@ export const ProductCartHandler = ({ product, children }: ProductCartHandlerProp
     }
   };
 
-  const handleUpdateQuantity = (quantity: number) => {
+  const handleUpdateQuantity = async (quantity: number) => {
     if (product) {
-      const success = updateQuantity(parseInt(product.id), quantity);
+      const success = await updateQuantity(parseInt(product.id), quantity);
       if (!success) {
         toast({
           title: "Estoque insuficiente",

@@ -81,8 +81,7 @@ export class ProductService {
           image: productData.image,
           category: productData.category,
           brand: productData.brand,
-          stock_quantity: productData.stockQuantity,
-          in_stock: productData.stockQuantity > 0
+          stock_quantity: productData.stockQuantity
         })
         .select()
         .single();
@@ -123,7 +122,6 @@ export class ProductService {
       if (productData.brand !== undefined) updateData.brand = productData.brand;
       if (productData.stockQuantity !== undefined) {
         updateData.stock_quantity = productData.stockQuantity;
-        updateData.in_stock = productData.stockQuantity > 0;
       }
       
       const { data, error } = await supabase
@@ -175,8 +173,7 @@ export class ProductService {
       const { error } = await supabase
         .from('products')
         .update({ 
-          stock_quantity: newStock,
-          in_stock: newStock > 0
+          stock_quantity: newStock
         })
         .eq('id', id);
       

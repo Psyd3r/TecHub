@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, User, Package, Menu, X, Settings } from "lucide-react";
+import { Menu, Settings } from "lucide-react";
 import { PiDetectiveBold } from "react-icons/pi";
 import { useCartStore } from "@/stores/CartStore";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useUserRole } from "@/hooks/useUserRole";
 import { CartDrawer } from "./CartDrawer";
 import { AuthButton } from "./AuthButton";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-export const Navbar = () => {
+const Navbar = memo(() => {
   const { totalItems } = useCartStore();
   const { user } = useAuthStore();
   const { isAdmin } = useUserRole();
@@ -36,14 +36,14 @@ export const Navbar = () => {
     { href: "/#produtos", label: "Produtos" },
   ];
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
       behavior: "smooth"
     });
-  };
+  }, []);
 
-  const handleNavClick = (href: string, e: React.MouseEvent) => {
+  const handleNavClick = useCallback((href: string, e: React.MouseEvent) => {
     e.preventDefault();
     
     if (href === "/") {
@@ -73,9 +73,9 @@ export const Navbar = () => {
     
     // Close mobile menu
     setIsMobileMenuOpen(false);
-  };
+  }, [navigate, scrollToTop]);
 
-  const handleLogoClick = (e: React.MouseEvent) => {
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsAnimatingHome(true);
     scrollToTop();
@@ -87,15 +87,20 @@ export const Navbar = () => {
     
     // Close mobile menu if open
     setIsMobileMenuOpen(false);
-  };
+  }, [scrollToTop]);
+
+  const handleAdminClick = useCallback(() => {
+    navigate("/admin");
+    setIsMobileMenuOpen(false);
+  }, [navigate]);
 
   return (
     <>
       <nav 
         className={`fixed top-3.5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 rounded-full ${
           isScrolled
-            ? "w-[90%] max-w-4xl bg-[#1B1B1B]/40 backdrop-blur-xl border border-white/10 scale-95"
-            : "w-[95%] max-w-6xl bg-[#1B1B1B] scale-100"
+            ? "w-[90%] max-w-4xl bg-background/80 backdrop-blur-xl border border-white/10 scale-95"
+            : "w-[95%] max-w-6xl bg-transparent scale-100"
         }`}
       >
         <div className="px-6 lg:px-8">
@@ -142,7 +147,7 @@ export const Navbar = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate("/admin")}
+                  onClick={handleAdminClick}
                   className="text-white hover:bg-white/10"
                   title="Painel Administrativo"
                 >
@@ -168,10 +173,10 @@ export const Navbar = () => {
                 </SheetTrigger>
                 <SheetContent 
                   side="right" 
-                  className="w-[300px] bg-[#1B1B1B] border-white/10"
+                  className="w-[300px] bg-background border-border"
                 >
                   <div className="flex flex-col space-y-6 mt-8">
-                    {/* Mobile Logo com PiDetectiveBold */}
+                    {/* Mobile Logo */}
                     <button 
                       onClick={handleLogoClick}
                       className={`flex items-center space-x-2 px-2 transition-all duration-300 ${
@@ -183,7 +188,7 @@ export const Navbar = () => {
                       }`}>
                         <PiDetectiveBold className="h-5 w-5 text-black" />
                       </div>
-                      <span className={`text-white font-bold text-xl transition-all duration-300 ${
+                      <span className={`text-foreground font-bold text-xl transition-all duration-300 ${
                         isAnimatingHome ? 'text-[#4ADE80] animate-pulse' : ''
                       }`}>
                         TechHub
@@ -197,7 +202,7 @@ export const Navbar = () => {
                           key={link.href}
                           href={link.href}
                           onClick={(e) => handleNavClick(link.href, e)}
-                          className={`text-white hover:text-[#4ADE80] transition-all duration-300 text-lg font-medium px-2 py-2 cursor-pointer ${
+                          className={`text-foreground hover:text-[#4ADE80] transition-all duration-300 text-lg font-medium px-2 py-2 cursor-pointer ${
                             link.href === "/" && isAnimatingHome ? 'text-[#4ADE80] animate-pulse scale-105' : ''
                           } ${link.href === "/" ? 'hover:scale-105' : ''}`}
                         >
@@ -208,11 +213,8 @@ export const Navbar = () => {
                       {/* Admin shortcut mobile */}
                       {isAdmin && (
                         <button
-                          onClick={() => {
-                            navigate("/admin");
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="text-white hover:text-[#4ADE80] transition-colors duration-200 text-lg font-medium px-2 py-2 flex items-center gap-2"
+                          onClick={handleAdminClick}
+                          className="text-foreground hover:text-[#4ADE80] transition-colors duration-200 text-lg font-medium px-2 py-2 flex items-center gap-2"
                         >
                           <Settings className="h-4 w-4" />
                           Painel Admin
@@ -221,7 +223,7 @@ export const Navbar = () => {
                     </div>
 
                     {/* Mobile Auth */}
-                    <div className="px-2 pt-4 border-t border-white/10">
+                    <div className="px-2 pt-4 border-t border-border">
                       <AuthButton />
                     </div>
                   </div>
@@ -236,4 +238,8 @@ export const Navbar = () => {
       <div className="h-20" />
     </>
   );
-};
+});
+
+Navbar.displayName = 'Navbar';
+
+export { Navbar };

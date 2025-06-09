@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/AuthStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Calendar, CreditCard } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
@@ -29,7 +28,7 @@ interface Order {
 }
 
 export const OrderHistory = () => {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 

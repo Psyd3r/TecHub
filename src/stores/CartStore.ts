@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { CartModel, CartItemModel } from '@/models/CartModel';
 import { ProductModel } from '@/models/ProductModel';
@@ -60,6 +59,7 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
         totalPrice: cart.totalPrice
       });
     } catch (error) {
+      console.error('Erro ao carregar carrinho:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Erro ao carregar carrinho'
       });
@@ -117,6 +117,7 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
         get().loadCart();
       }
     } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Erro ao carregar produtos',
         loading: false,
@@ -126,7 +127,6 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
   },
   
   addToCart: async (product, quantity = 1) => {
-    set({ loading: true, error: null });
     try {
       const success = CartController.addToCart(product as any, { 
         productId: product.id, 
@@ -139,21 +139,16 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
           items: cart.items,
           totalItems: cart.totalItems,
           totalPrice: cart.totalPrice,
-          loading: false
+          error: null
         });
         return true;
       } else {
-        set({ 
-          error: 'Estoque insuficiente',
-          loading: false 
-        });
+        set({ error: 'Estoque insuficiente' });
         return false;
       }
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Erro ao adicionar ao carrinho',
-        loading: false 
-      });
+      console.error('Erro ao adicionar ao carrinho:', error);
+      set({ error: error instanceof Error ? error.message : 'Erro ao adicionar ao carrinho' });
       return false;
     }
   },
@@ -173,7 +168,6 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
       return false;
     }
 
-    set({ loading: true, error: null });
     try {
       const success = CartController.updateCartItem(
         { productId, quantity },
@@ -186,21 +180,16 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
           items: cart.items,
           totalItems: cart.totalItems,
           totalPrice: cart.totalPrice,
-          loading: false
+          error: null
         });
         return true;
       } else {
-        set({ 
-          error: 'Estoque insuficiente',
-          loading: false 
-        });
+        set({ error: 'Estoque insuficiente' });
         return false;
       }
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Erro ao atualizar carrinho',
-        loading: false 
-      });
+      console.error('Erro ao atualizar carrinho:', error);
+      set({ error: error instanceof Error ? error.message : 'Erro ao atualizar carrinho' });
       return false;
     }
   },
@@ -212,12 +201,12 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
       set({ 
         items: cart.items,
         totalItems: cart.totalItems,
-        totalPrice: cart.totalPrice
+        totalPrice: cart.totalPrice,
+        error: null
       });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Erro ao remover item'
-      });
+      console.error('Erro ao remover item:', error);
+      set({ error: error instanceof Error ? error.message : 'Erro ao remover item' });
     }
   },
   
@@ -227,12 +216,12 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
       set({ 
         items: [],
         totalItems: 0,
-        totalPrice: 0
+        totalPrice: 0,
+        error: null
       });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Erro ao limpar carrinho'
-      });
+      console.error('Erro ao limpar carrinho:', error);
+      set({ error: error instanceof Error ? error.message : 'Erro ao limpar carrinho' });
     }
   },
   
@@ -270,7 +259,8 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
           p.id === productId
             ? { ...p, stockQuantity: newStock, inStock: newStock > 0 }
             : p
-        )
+        ),
+        error: null
       }));
       
       // Atualizar itens do carrinho se necessário
@@ -303,20 +293,27 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
   },
 
   processOrder: async (paymentData, userId) => {
-    const { items } = get();
+    const { items, products } = get();
     
     try {
-      const orderNumber = await OrderController.processOrder(
-        userId,
-        items.map(item => ({
+      // Mapear itens com UUID para validação de estoque
+      const itemsWithUuid = items.map(item => {
+        const product = products.find(p => p.id === item.id);
+        return {
           id: item.id,
+          uuid: product?.uuid,
           name: item.name,
           price: item.price,
           quantity: item.quantity,
           image: item.image,
           brand: item.brand,
           stockQuantity: item.stockQuantity
-        })),
+        };
+      });
+
+      const orderNumber = await OrderController.processOrder(
+        userId,
+        itemsWithUuid,
         paymentData
       );
 

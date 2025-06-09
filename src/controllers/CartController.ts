@@ -1,4 +1,3 @@
-
 import { CartModel, CartItemModel, AddToCartData, UpdateCartItemData, CartModelValidator } from "@/models/CartModel";
 import { ProductModel } from "@/models/ProductModel";
 import { LocalStorageService } from "@/services/LocalStorageService";
@@ -52,7 +51,8 @@ export class CartController {
           brand: product.brand,
           category: product.category,
           quantity: data.quantity,
-          stockQuantity: product.stockQuantity
+          stockQuantity: product.stockQuantity,
+          inStock: product.stockQuantity > 0
         };
         
         currentCart.items.push(newItem);
@@ -90,6 +90,7 @@ export class CartController {
       if (itemIndex >= 0) {
         currentCart.items[itemIndex].quantity = data.quantity;
         currentCart.items[itemIndex].stockQuantity = availableStock;
+        currentCart.items[itemIndex].inStock = availableStock > 0;
         this.saveCart(currentCart.items);
         return true;
       }

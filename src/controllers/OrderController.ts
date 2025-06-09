@@ -7,6 +7,7 @@ export class OrderController {
     userId: string, 
     items: Array<{
       id: number;
+      uuid?: string;
       name: string;
       price: number;
       quantity: number;
@@ -21,20 +22,24 @@ export class OrderController {
     }
 
     try {
-      // Validar estoque novamente antes de processar
-      const products = await ProductService.getAllProducts();
-      
+      console.log('Simulação acadêmica - validações de estoque mantidas para realismo do sistema');
+
+      // Verificar estoque disponível para cada item
       for (const item of items) {
-        const product = products.find(p => parseInt(p.id) === item.id);
+        // Usar UUID se disponível, senão usar ID convertido para string
+        const productId = item.uuid || item.id.toString();
+        const product = await ProductService.getProductById(productId);
+        
         if (!product) {
-          throw new Error(`Produto "${item.name}" não encontrado`);
+          throw new Error(`Produto ${item.name} não encontrado`);
         }
+        
         if (product.stockQuantity < item.quantity) {
-          throw new Error(`Estoque insuficiente para "${item.name}"`);
+          throw new Error(`Estoque insuficiente para ${item.name}. Disponível: ${product.stockQuantity}, Solicitado: ${item.quantity}`);
         }
       }
 
-      // Criar pedido usando a nova interface
+      // Criar pedido
       const orderNumber = await OrderService.createOrder({
         userId,
         items: items.map(item => ({
@@ -48,12 +53,26 @@ export class OrderController {
         paymentData
       });
 
-      // Reduzir estoque dos produtos
+      // Atualizar estoque após criar o pedido - CORREÇÃO DO BUG
       for (const item of items) {
-        const newStock = item.stockQuantity - item.quantity;
-        await ProductService.updateStock(item.id.toString(), newStock);
+        const productId = item.uuid || item.id.toString();
+        
+        // Buscar o produto atual para obter o estoque atualizado
+        const product = await ProductService.getProductById(productId);
+        
+        if (product) {
+          // Calcular o novo estoque: estoque atual - quantidade comprada
+          const newStockQuantity = product.stockQuantity - item.quantity;
+          console.log(`Atualizando estoque do produto ${item.name}: ${product.stockQuantity} - ${item.quantity} = ${newStockQuantity}`);
+          
+          // Garantir que o estoque não fique negativo
+          const finalStock = Math.max(0, newStockQuantity);
+          
+          await ProductService.updateStock(productId, finalStock);
+        }
       }
 
+      console.log(`Pedido criado com sucesso: ${orderNumber}`);
       return orderNumber;
     } catch (error) {
       console.error('Erro ao processar pedido:', error);
