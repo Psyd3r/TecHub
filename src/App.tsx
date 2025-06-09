@@ -1,61 +1,62 @@
 
-import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { useAuthStore } from "./stores/AuthStore";
+import { useCartStore } from "./stores/CartStore";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
+import Admin from "./pages/Admin";
 import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
+import Orders from "./pages/Orders";
+import { AdminRoute } from "./components/AdminRoute";
 import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
 
-// Create QueryClient instance outside of component to prevent recreation
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-const App: React.FC = () => {
+function App() {
+  const initializeAuth = useAuthStore(state => state.initialize);
+  const loadCart = useCartStore(state => state.loadCart);
+
+  useEffect(() => {
+    // Initialize authentication
+    const unsubscribe = initializeAuth();
+    
+    // Load cart from localStorage
+    loadCart();
+
+    return unsubscribe;
+  }, [initializeAuth, loadCart]);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/produto/:id" element={<ProductDetails />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order-success" element={<OrderSuccess />} />
-                <Route path="/admin" element={<Admin />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/produto/:id" element={<ProductDetails />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-success" element={<OrderSuccess />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

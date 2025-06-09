@@ -2,11 +2,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { ProductCard } from "./ProductCard";
 import { ProductFilters } from "./ProductFilters";
-import { useCart } from "@/contexts/CartContext";
+import { useCartStore } from "@/stores/CartStore";
 import { Package } from "lucide-react";
+import { PRODUCT_CATEGORIES } from "@/constants/categories";
 
 export const ProductCatalog = () => {
-  const { products, loadProducts } = useCart();
+  const { products, loadProducts } = useCartStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000]);
@@ -46,6 +47,24 @@ export const ProductCatalog = () => {
     return filtered;
   }, [products, searchTerm, selectedCategory, priceRange, sortBy, showInStock]);
 
+  const getCategoryStats = () => {
+    const stats = PRODUCT_CATEGORIES.map(category => {
+      const categoryProducts = category.id === "todos" 
+        ? products 
+        : products.filter(p => p.category === category.name);
+      
+      return {
+        ...category,
+        count: categoryProducts.length,
+        inStockCount: categoryProducts.filter(p => p.inStock).length
+      };
+    });
+    return stats;
+  };
+
+  const categoryStats = getCategoryStats();
+  const selectedCategoryData = PRODUCT_CATEGORIES.find(cat => cat.name === selectedCategory);
+
   return (
     <section id="produtos" className="py-20 px-4 bg-black">
       <div className="max-w-7xl mx-auto">
@@ -70,7 +89,6 @@ export const ProductCatalog = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Filtros */}
             <div className="lg:col-span-1">
               <ProductFilters
                 searchTerm={searchTerm}
@@ -86,22 +104,40 @@ export const ProductCatalog = () => {
               />
             </div>
 
-            {/* Produtos */}
             <div className="lg:col-span-3">
+              {selectedCategoryData && selectedCategory !== "Todos" && (
+                <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <selectedCategoryData.icon className="h-6 w-6 text-[#4ADE80]" />
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{selectedCategoryData.name}</h3>
+                      <p className="text-gray-400 text-sm">{selectedCategoryData.description}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between items-center mb-6">
                 <p className="text-gray-300">
                   Mostrando {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
+                  {selectedCategory !== "Todos" && ` em ${selectedCategory}`}
                 </p>
               </div>
 
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">
-                    Nenhum produto encontrado com os filtros selecionados.
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Nenhum produto encontrado
+                  </h3>
+                  <p className="text-gray-400 text-lg mb-4">
+                    {selectedCategory !== "Todos" 
+                      ? `Nenhum produto encontrado na categoria "${selectedCategory}" com os filtros selecionados.`
+                      : "Nenhum produto encontrado com os filtros selecionados."
+                    }
                   </p>
-                  <p className="text-gray-500 text-sm mt-2">
-                    Tente ajustar os filtros para ver mais produtos.
+                  <p className="text-gray-500 text-sm">
+                    Tente ajustar os filtros ou escolher uma categoria diferente.
                   </p>
                 </div>
               ) : (

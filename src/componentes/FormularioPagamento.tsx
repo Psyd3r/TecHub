@@ -7,40 +7,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { QrCode, CreditCard, Calendar, Shield } from "lucide-react";
 
-interface PaymentFormProps {
-  type: "credit" | "boleto" | "pix";
-  onSubmit: (data: any) => void;
-  isProcessing: boolean;
+interface PropsFormularioPagamento {
+  tipo: "credito" | "boleto" | "pix";
+  aoEnviar: (dados: any) => void;
+  processando: boolean;
   total: number;
-  disabled?: boolean;
+  desabilitado?: boolean;
 }
 
-export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = false }: PaymentFormProps) => {
-  const [formData, setFormData] = useState({
-    cardNumber: "",
-    cardName: "",
-    expiryDate: "",
+export const FormularioPagamento = ({ 
+  tipo, 
+  aoEnviar, 
+  processando, 
+  total, 
+  desabilitado = false 
+}: PropsFormularioPagamento) => {
+  const [dadosFormulario, setDadosFormulario] = useState({
+    numeroCartao: "",
+    nomeCartao: "",
+    dataVencimento: "",
     cvv: "",
-    installments: "1",
+    parcelas: "1",
     cpf: "",
     email: "",
-    phone: ""
+    telefone: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const manipularEnvio = (e: React.FormEvent) => {
     e.preventDefault();
-    if (disabled) return;
-    onSubmit({ ...formData, paymentType: type });
+    if (desabilitado) return;
+    aoEnviar({ ...dadosFormulario, tipoPagamento: tipo });
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    if (disabled) return;
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const manipularMudancaInput = (campo: string, valor: string) => {
+    if (desabilitado) return;
+    setDadosFormulario(anterior => ({ ...anterior, [campo]: valor }));
   };
 
-  if (type === "pix") {
+  if (tipo === "pix") {
     return (
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={manipularEnvio} className="space-y-6">
         <div className="text-center">
           <div className="bg-white p-4 rounded-lg inline-block mb-4">
             <QrCode className="h-32 w-32 text-black" />
@@ -61,12 +67,12 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
             <Label htmlFor="cpf" className="text-white">CPF</Label>
             <Input
               id="cpf"
-              value={formData.cpf}
-              onChange={(e) => handleInputChange("cpf", e.target.value)}
+              value={dadosFormulario.cpf}
+              onChange={(e) => manipularMudancaInput("cpf", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white"
               placeholder="000.000.000-00"
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
           </div>
           <div>
@@ -74,30 +80,30 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
+              value={dadosFormulario.email}
+              onChange={(e) => manipularMudancaInput("email", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white"
               placeholder="seu@email.com"
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
           </div>
         </div>
 
         <Button
           type="submit"
-          disabled={isProcessing || disabled}
+          disabled={processando || desabilitado}
           className="w-full button-gradient text-white font-semibold py-3"
         >
-          {isProcessing ? "Processando..." : "Confirmar Pagamento PIX"}
+          {processando ? "Processando..." : "Confirmar Pagamento PIX"}
         </Button>
       </form>
     );
   }
 
-  if (type === "boleto") {
+  if (tipo === "boleto") {
     return (
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={manipularEnvio} className="space-y-6">
         <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="h-5 w-5 text-[#4ADE80]" />
@@ -114,12 +120,12 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
             <Label htmlFor="cpf" className="text-white">CPF</Label>
             <Input
               id="cpf"
-              value={formData.cpf}
-              onChange={(e) => handleInputChange("cpf", e.target.value)}
+              value={dadosFormulario.cpf}
+              onChange={(e) => manipularMudancaInput("cpf", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white"
               placeholder="000.000.000-00"
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
           </div>
           <div>
@@ -127,34 +133,34 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
+              value={dadosFormulario.email}
+              onChange={(e) => manipularMudancaInput("email", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white"
               placeholder="seu@email.com"
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
           </div>
           <div>
-            <Label htmlFor="phone" className="text-white">Telefone</Label>
+            <Label htmlFor="telefone" className="text-white">Telefone</Label>
             <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
+              id="telefone"
+              value={dadosFormulario.telefone}
+              onChange={(e) => manipularMudancaInput("telefone", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white"
               placeholder="(11) 99999-9999"
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
           </div>
         </div>
 
         <Button
           type="submit"
-          disabled={isProcessing || disabled}
+          disabled={processando || desabilitado}
           className="w-full button-gradient text-white font-semibold py-3"
         >
-          {isProcessing ? "Gerando Boleto..." : "Gerar Boleto"}
+          {processando ? "Gerando Boleto..." : "Gerar Boleto"}
         </Button>
       </form>
     );
@@ -162,50 +168,50 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
 
   // Cartão de Crédito
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={manipularEnvio} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <Label htmlFor="cardNumber" className="text-white">Número do Cartão</Label>
+          <Label htmlFor="numeroCartao" className="text-white">Número do Cartão</Label>
           <div className="relative">
             <Input
-              id="cardNumber"
-              value={formData.cardNumber}
-              onChange={(e) => handleInputChange("cardNumber", e.target.value)}
+              id="numeroCartao"
+              value={dadosFormulario.numeroCartao}
+              onChange={(e) => manipularMudancaInput("numeroCartao", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white pl-10"
               placeholder="0000 0000 0000 0000"
               maxLength={19}
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
             <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
         </div>
 
         <div>
-          <Label htmlFor="cardName" className="text-white">Nome no Cartão</Label>
+          <Label htmlFor="nomeCartao" className="text-white">Nome no Cartão</Label>
           <Input
-            id="cardName"
-            value={formData.cardName}
-            onChange={(e) => handleInputChange("cardName", e.target.value)}
+            id="nomeCartao"
+            value={dadosFormulario.nomeCartao}
+            onChange={(e) => manipularMudancaInput("nomeCartao", e.target.value)}
             className="bg-gray-800/50 border-gray-700 text-white"
             placeholder="Nome como está no cartão"
             required
-            disabled={disabled}
+            disabled={desabilitado}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="expiryDate" className="text-white">Validade</Label>
+            <Label htmlFor="dataVencimento" className="text-white">Validade</Label>
             <Input
-              id="expiryDate"
-              value={formData.expiryDate}
-              onChange={(e) => handleInputChange("expiryDate", e.target.value)}
+              id="dataVencimento"
+              value={dadosFormulario.dataVencimento}
+              onChange={(e) => manipularMudancaInput("dataVencimento", e.target.value)}
               className="bg-gray-800/50 border-gray-700 text-white"
               placeholder="MM/AA"
               maxLength={5}
               required
-              disabled={disabled}
+              disabled={desabilitado}
             />
           </div>
           <div>
@@ -213,13 +219,13 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
             <div className="relative">
               <Input
                 id="cvv"
-                value={formData.cvv}
-                onChange={(e) => handleInputChange("cvv", e.target.value)}
+                value={dadosFormulario.cvv}
+                onChange={(e) => manipularMudancaInput("cvv", e.target.value)}
                 className="bg-gray-800/50 border-gray-700 text-white pr-10"
                 placeholder="123"
                 maxLength={4}
                 required
-                disabled={disabled}
+                disabled={desabilitado}
               />
               <Shield className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
@@ -227,11 +233,11 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
         </div>
 
         <div>
-          <Label htmlFor="installments" className="text-white">Parcelamento</Label>
+          <Label htmlFor="parcelas" className="text-white">Parcelamento</Label>
           <Select 
-            value={formData.installments} 
-            onValueChange={(value) => handleInputChange("installments", value)}
-            disabled={disabled}
+            value={dadosFormulario.parcelas} 
+            onValueChange={(valor) => manipularMudancaInput("parcelas", valor)}
+            disabled={desabilitado}
           >
             <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white">
               <SelectValue />
@@ -249,10 +255,10 @@ export const PaymentForm = ({ type, onSubmit, isProcessing, total, disabled = fa
 
       <Button
         type="submit"
-        disabled={isProcessing || disabled}
+        disabled={processando || desabilitado}
         className="w-full button-gradient text-white font-semibold py-3"
       >
-        {isProcessing ? "Processando..." : `Finalizar Compra - R$ ${total.toLocaleString('pt-BR')}`}
+        {processando ? "Processando..." : `Finalizar Compra - R$ ${total.toLocaleString('pt-BR')}`}
       </Button>
     </form>
   );

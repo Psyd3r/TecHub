@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Link, Image as ImageIcon } from "lucide-react";
+import { PRODUCT_CATEGORIES, getCategoryNamesExceptAll } from "@/constants/categories";
 
 interface Product {
   id?: string;
@@ -19,8 +19,6 @@ interface Product {
   description?: string;
   image?: string;
   category: string;
-  brand: string;
-  stock_quantity: number;
 }
 
 interface ProductFormProps {
@@ -29,14 +27,12 @@ interface ProductFormProps {
   onCancel: () => void;
 }
 
-const categories = ["Smartphones", "Notebooks", "Tablets", "Acessórios", "Smartwatches"];
-
 export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageMethod, setImageMethod] = useState<"upload" | "url">("upload");
+  const [imageUrl, setImageUrl] = useState(product?.image || "");
+  const [imageMethod, setImageMethod] = useState<"upload" | "url">("url");
   const [formData, setFormData] = useState<Product>({
     name: product?.name || "",
     price: product?.price || 0,
@@ -44,12 +40,63 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
     description: product?.description || "",
     image: product?.image || "",
     category: product?.category || "",
-    brand: product?.brand || "",
-    stock_quantity: product?.stock_quantity || 0,
   });
+
+  // Usar categorias da constante centralizada (excluindo "Todos")
+  const categories = getCategoryNamesExceptAll();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Iniciando submissão do formulário...');
+    console.log('Form data:', formData);
+    
+    // Validações básicas
+    if (!formData.name.trim()) {
+      toast({
+        title: "Erro de validação",
+        description: "Nome do produto é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.category) {
+      toast({
+        title: "Erro de validação",
+        description: "Categoria é obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (formData.price <= 0) {
+      toast({
+        title: "Erro de validação",
+        description: "Preço deve ser maior que zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validação de valores máximos para evitar overflow
+    if (formData.price > 99999999) {
+      toast({
+        title: "Erro de validação",
+        description: "Preço de venda não pode ser maior que R$ 99.999.999,00.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.original_price && formData.original_price > 99999999) {
+      toast({
+        title: "Erro de validação",
+        description: "Preço original não pode ser maior que R$ 99.999.999,00.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -57,55 +104,74 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
 
       // Upload da imagem se uma nova foi selecionada
       if (imageMethod === "upload" && imageFile) {
+        console.log('Fazendo upload da imagem...');
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
         const filePath = `products/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(filePath, imageFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Erro no upload:', uploadError);
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(filePath);
 
         finalImageUrl = publicUrl;
-      } else if (imageMethod === "url" && imageUrl) {
-        finalImageUrl = imageUrl;
+        console.log('Upload realizado com sucesso:', finalImageUrl);
+      } else if (imageMethod === "url" && imageUrl.trim()) {
+        finalImageUrl = imageUrl.trim();
+        console.log('Usando URL da imagem:', finalImageUrl);
       }
 
       const productData = {
-        ...formData,
-        image: finalImageUrl,
-        in_stock: formData.stock_quantity > 0
+        name: formData.name.trim(),
+        price: Number(formData.price.toFixed(2)),
+        original_price: formData.original_price ? Number(formData.original_price.toFixed(2)) : null,
+        description: formData.description?.trim() || null,
+        image: finalImageUrl || null,
+        category: formData.category,
+        brand: 'Genérica',
+        stock_quantity: 10
       };
 
+      console.log('Dados do produto para salvar:', productData);
+
       if (product?.id) {
-        // Atualizar produto existente
+        console.log('Atualizando produto existente...');
         const { error } = await supabase
           .from('products')
           .update(productData)
           .eq('id', product.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao atualizar produto:', error);
+          throw error;
+        }
         
         toast({
           title: "Produto atualizado!",
           description: "O produto foi atualizado com sucesso.",
         });
       } else {
-        // Criar novo produto
+        console.log('Criando novo produto...');
         const { error } = await supabase
           .from('products')
           .insert([productData]);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao criar produto:', error);
+          throw error;
+        }
         
         toast({
           title: "Produto criado!",
-          description: "O produto foi criado com sucesso.",
+          description: "O produto foi criado com sucesso e está disponível no catálogo.",
         });
       }
       
@@ -114,7 +180,7 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
       console.error('Erro ao salvar produto:', error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao salvar o produto.",
+        description: `Ocorreu um erro ao salvar o produto: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive",
       });
     } finally {
@@ -132,7 +198,26 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Arquivo inválido",
+          description: "Por favor, selecione apenas arquivos de imagem.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A imagem deve ter no máximo 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setImageFile(file);
+      console.log('Arquivo de imagem selecionado:', file.name);
     }
   };
 
@@ -162,42 +247,32 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
               </div>
               
               <div>
-                <Label htmlFor="brand" className="text-white">Marca *</Label>
-                <Input
-                  id="brand"
-                  value={formData.brand}
-                  onChange={(e) => handleInputChange('brand', e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]"
-                  placeholder="Digite a marca do produto"
-                  required
-                />
-              </div>
-              
-              <div>
                 <Label htmlFor="category" className="text-white">Categoria *</Label>
                 <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
+                  <SelectContent className="bg-gray-700 border-gray-600">
+                    {PRODUCT_CATEGORIES.filter(cat => cat.id !== "todos").map((category) => {
+                      const IconComponent = category.icon;
+                      return (
+                        <SelectItem 
+                          key={category.id} 
+                          value={category.name}
+                          className="text-white hover:bg-gray-600 focus:bg-gray-600"
+                        >
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4 text-[#4ADE80]" />
+                            <div className="flex flex-col">
+                              <span>{category.name}</span>
+                              <span className="text-xs text-gray-400">{category.description}</span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="stock_quantity" className="text-white">Quantidade em Estoque *</Label>
-                <Input
-                  id="stock_quantity"
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => handleInputChange('stock_quantity', parseInt(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]"
-                  placeholder="0"
-                  required
-                />
               </div>
             </div>
             
@@ -228,12 +303,15 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
                   id="price"
                   type="number"
                   step="0.01"
+                  min="0"
+                  max="99999999"
                   value={formData.price}
-                  onChange={(e) => handleInputChange('price', parseFloat(e.target.value))}
+                  onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
                   className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]"
                   placeholder="0,00"
                   required
                 />
+                <p className="text-xs text-gray-400 mt-1">Máximo: R$ 99.999.999,00</p>
               </div>
               
               <div>
@@ -242,6 +320,8 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
                   id="original_price"
                   type="number"
                   step="0.01"
+                  min="0"
+                  max="99999999"
                   value={formData.original_price || ""}
                   onChange={(e) => handleInputChange('original_price', e.target.value ? parseFloat(e.target.value) : undefined)}
                   className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]"
@@ -264,29 +344,15 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
           <CardContent>
             <Tabs value={imageMethod} onValueChange={(value) => setImageMethod(value as "upload" | "url")}>
               <TabsList className="grid w-full grid-cols-2 bg-gray-700">
-                <TabsTrigger value="upload" className="data-[state=active]:bg-[#4ADE80] data-[state=active]:text-black">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload de Arquivo
-                </TabsTrigger>
                 <TabsTrigger value="url" className="data-[state=active]:bg-[#4ADE80] data-[state=active]:text-black">
                   <Link className="h-4 w-4 mr-2" />
                   Link da Imagem
                 </TabsTrigger>
+                <TabsTrigger value="upload" className="data-[state=active]:bg-[#4ADE80] data-[state=active]:text-black">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload de Arquivo
+                </TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="upload" className="mt-4">
-                <div>
-                  <Label htmlFor="image-file" className="text-white">Selecionar Arquivo</Label>
-                  <Input
-                    id="image-file"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileChange}
-                    className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Formatos aceitos: JPG, PNG, WEBP</p>
-                </div>
-              </TabsContent>
               
               <TabsContent value="url" className="mt-4">
                 <div>
@@ -302,10 +368,29 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
                   <p className="text-xs text-gray-400 mt-1">Cole o link direto da imagem</p>
                 </div>
               </TabsContent>
+              
+              <TabsContent value="upload" className="mt-4">
+                <div>
+                  <Label htmlFor="image-file" className="text-white">Selecionar Arquivo</Label>
+                  <Input
+                    id="image-file"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileChange}
+                    className="bg-gray-700 border-gray-600 text-white focus:border-[#4ADE80]"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Formatos aceitos: JPG, PNG, WEBP (máx. 5MB)</p>
+                  {imageFile && (
+                    <p className="text-xs text-green-400 mt-1">
+                      Arquivo selecionado: {imageFile.name}
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
             </Tabs>
             
             {/* Preview da imagem */}
-            {((imageMethod === "upload" && imageFile) || (imageMethod === "url" && imageUrl) || formData.image) && (
+            {((imageMethod === "upload" && imageFile) || (imageMethod === "url" && imageUrl.trim()) || formData.image) && (
               <div className="mt-4">
                 <Label className="text-white">Preview</Label>
                 <div className="mt-2 border border-gray-600 rounded-lg p-2 bg-gray-700">
@@ -313,12 +398,16 @@ export const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) 
                     src={
                       imageMethod === "upload" && imageFile 
                         ? URL.createObjectURL(imageFile)
-                        : imageMethod === "url" && imageUrl
-                        ? imageUrl
-                        : formData.image
+                        : imageMethod === "url" && imageUrl.trim()
+                        ? imageUrl.trim()
+                        : formData.image || ""
                     }
                     alt="Preview"
                     className="w-32 h-32 object-cover rounded-md mx-auto"
+                    onError={(e) => {
+                      console.log('Erro ao carregar imagem preview');
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               </div>

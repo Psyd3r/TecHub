@@ -5,32 +5,96 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, CreditCard, FileText, Smartphone } from "lucide-react";
+import { ArrowLeft, CreditCard, FileText, Smartphone, AlertTriangle } from "lucide-react";
 import { PaymentForm } from "@/components/PaymentForm";
 import { OrderSummary } from "@/components/OrderSummary";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Checkout = () => {
-  const { items, getTotalPrice, clearCart, processOrder } = useCart();
+  const { items, getTotalPrice, clearCart, processOrder, products } = useCart();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
 
   const totalPrice = getTotalPrice();
 
+  // Validar estoque antes do checkout
+  const validateStock = () => {
+    const errors: string[] = [];
+    
+    items.forEach(item => {
+      const product = products.find(p => p.id === item.id);
+      if (!product) {
+        errors.push(`Produto "${item.name}" não encontrado`);
+        return;
+      }
+      
+      if (product.stockQuantity < item.quantity) {
+        if (product.stockQuantity === 0) {
+          errors.push(`"${item.name}" está fora de estoque`);
+        } else {
+          errors.push(`"${item.name}": apenas ${product.stockQuantity} unidades disponíveis (você tem ${item.quantity} no carrinho)`);
+        }
+      }
+    });
+    
+    setStockErrors(errors);
+    return errors.length === 0;
+  };
+
   const handlePayment = async (paymentData: any) => {
+    // Validar estoque antes de processar
+    if (!validateStock()) {
+      toast({
+        title: "Estoque insuficiente",
+        description: "Alguns itens do seu carrinho não têm estoque suficiente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     
-    // Simular processamento de pagamento
-    setTimeout(() => {
-      // Processar o pedido (atualizar estoque)
-      processOrder();
+    try {
+      // Simular processamento de pagamento
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Processar o pedido (salvar no banco e reduzir estoque)
+      const orderNumber = await processOrder(paymentData);
+      
+      // Limpar carrinho
       clearCart();
+      
+      toast({
+        title: "Pedido realizado com sucesso!",
+        description: `Pedido #${orderNumber} foi processado.`,
+      });
+      
+      // Navegar para página de sucesso
       navigate("/order-success", { 
         state: { 
-          orderData: { items, total: totalPrice, paymentMethod, ...paymentData } 
+          orderData: { 
+            items, 
+            total: totalPrice, 
+            paymentMethod, 
+            orderNumber,
+            ...paymentData 
+          } 
         } 
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Erro ao processar pedido:', error);
+      toast({
+        title: "Erro no pagamento",
+        description: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -62,6 +126,21 @@ const Checkout = () => {
           </Button>
           <h1 className="text-3xl font-bold text-white">Finalizar Compra</h1>
         </div>
+
+        {/* Alertas de estoque */}
+        {stockErrors.length > 0 && (
+          <Alert className="mb-6 border-red-500 bg-red-500/10">
+            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-300">
+              <div className="font-semibold mb-2">Problemas de estoque encontrados:</div>
+              <ul className="list-disc list-inside space-y-1">
+                {stockErrors.map((error, index) => (
+                  <li key={index} className="text-sm">{error}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Resumo do Pedido */}
@@ -98,6 +177,7 @@ const Checkout = () => {
                       onSubmit={handlePayment} 
                       isProcessing={isProcessing}
                       total={totalPrice}
+                      disabled={stockErrors.length > 0}
                     />
                   </TabsContent>
 
@@ -107,6 +187,7 @@ const Checkout = () => {
                       onSubmit={handlePayment} 
                       isProcessing={isProcessing}
                       total={totalPrice}
+                      disabled={stockErrors.length > 0}
                     />
                   </TabsContent>
 
@@ -116,6 +197,7 @@ const Checkout = () => {
                       onSubmit={handlePayment} 
                       isProcessing={isProcessing}
                       total={totalPrice}
+                      disabled={stockErrors.length > 0}
                     />
                   </TabsContent>
                 </Tabs>

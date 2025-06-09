@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Check, X, Package } from "lucide-react";
 
-interface Product {
+interface Produto {
   id: string;
   name: string;
   category: string;
@@ -26,16 +25,16 @@ interface Product {
   image?: string;
 }
 
-export const StockTable = () => {
+export const TabelaEstoque = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<string>("");
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [idEditando, setIdEditando] = useState<string | null>(null);
+  const [valorEdicao, setValorEdicao] = useState<string>("");
 
-  const fetchProducts = async () => {
+  const buscarProdutos = async () => {
     try {
-      setLoading(true);
+      setCarregando(true);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -43,7 +42,7 @@ export const StockTable = () => {
       
       if (error) throw error;
       
-      setProducts(data || []);
+      setProdutos(data || []);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       toast({
@@ -52,22 +51,22 @@ export const StockTable = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    buscarProdutos();
   }, []);
 
-  const handleEditStart = (productId: string, currentStock: number) => {
-    setEditingId(productId);
-    setEditValue(currentStock.toString());
+  const iniciarEdicao = (idProduto: string, estoqueAtual: number) => {
+    setIdEditando(idProduto);
+    setValorEdicao(estoqueAtual.toString());
   };
 
-  const handleEditSave = async (productId: string) => {
-    const newStock = parseInt(editValue);
-    if (isNaN(newStock) || newStock < 0) {
+  const salvarEdicao = async (idProduto: string) => {
+    const novoEstoque = parseInt(valorEdicao);
+    if (isNaN(novoEstoque) || novoEstoque < 0) {
       toast({
         title: "Erro",
         description: "Quantidade deve ser um número válido maior ou igual a 0.",
@@ -77,33 +76,32 @@ export const StockTable = () => {
     }
 
     try {
-      console.log(`Atualizando estoque do produto ${productId} para ${newStock}`);
+      console.log(`Atualizando estoque do produto ${idProduto} para ${novoEstoque}`);
       
       const { error } = await supabase
         .from('products')
-        .update({ stock_quantity: newStock })
-        .eq('id', productId);
+        .update({ stock_quantity: novoEstoque })
+        .eq('id', idProduto);
 
       if (error) {
         console.error('Erro ao atualizar estoque:', error);
         throw error;
       }
 
-      // Atualizar o estado local
-      setProducts(prev => 
-        prev.map(product => 
-          product.id === productId 
-            ? { ...product, stock_quantity: newStock }
-            : product
+      setProdutos(anterior => 
+        anterior.map(produto => 
+          produto.id === idProduto 
+            ? { ...produto, stock_quantity: novoEstoque }
+            : produto
         )
       );
 
-      setEditingId(null);
-      setEditValue("");
+      setIdEditando(null);
+      setValorEdicao("");
       
       toast({
         title: "Estoque atualizado!",
-        description: `Estoque do produto foi atualizado para ${newStock} unidades.`,
+        description: `Estoque do produto foi atualizado para ${novoEstoque} unidades.`,
       });
     } catch (error) {
       console.error('Erro ao atualizar estoque:', error);
@@ -115,18 +113,18 @@ export const StockTable = () => {
     }
   };
 
-  const handleEditCancel = () => {
-    setEditingId(null);
-    setEditValue("");
+  const cancelarEdicao = () => {
+    setIdEditando(null);
+    setValorEdicao("");
   };
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: "Sem Estoque", variant: "destructive" as const };
-    if (stock <= 3) return { label: "Baixo Estoque", variant: "outline" as const };
-    return { label: "Em Estoque", variant: "default" as const };
+  const obterStatusEstoque = (estoque: number) => {
+    if (estoque === 0) return { rotulo: "Sem Estoque", variante: "destructive" as const };
+    if (estoque <= 3) return { rotulo: "Baixo Estoque", variante: "outline" as const };
+    return { rotulo: "Em Estoque", variante: "default" as const };
   };
 
-  if (loading) {
+  if (carregando) {
     return (
       <div className="text-center py-12">
         <p className="text-white">Carregando produtos...</p>
@@ -134,7 +132,7 @@ export const StockTable = () => {
     );
   }
 
-  if (products.length === 0) {
+  if (produtos.length === 0) {
     return (
       <div className="text-center py-12">
         <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -161,56 +159,56 @@ export const StockTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => {
-            const stockStatus = getStockStatus(product.stock_quantity);
-            const isEditing = editingId === product.id;
+          {produtos.map((produto) => {
+            const statusEstoque = obterStatusEstoque(produto.stock_quantity);
+            const estaEditando = idEditando === produto.id;
 
             return (
-              <TableRow key={product.id} className="border-gray-700">
+              <TableRow key={produto.id} className="border-gray-700">
                 <TableCell className="text-white">
                   <div className="flex items-center gap-3">
-                    {product.image && (
+                    {produto.image && (
                       <img
-                        src={product.image.startsWith('http') ? product.image : `https://images.unsplash.com/${product.image}?w=50&h=50&fit=crop`}
-                        alt={product.name}
+                        src={produto.image.startsWith('http') ? produto.image : `https://images.unsplash.com/${produto.image}?w=50&h=50&fit=crop`}
+                        alt={produto.name}
                         className="w-10 h-10 rounded-md object-cover"
                       />
                     )}
                     <div>
-                      <p className="font-medium">{product.name}</p>
+                      <p className="font-medium">{produto.name}</p>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-300">{product.category}</TableCell>
-                <TableCell className="text-gray-300">{product.brand}</TableCell>
+                <TableCell className="text-gray-300">{produto.category}</TableCell>
+                <TableCell className="text-gray-300">{produto.brand}</TableCell>
                 <TableCell className="text-green-400 font-medium">
-                  R$ {product.price.toLocaleString('pt-BR')}
+                  R$ {produto.price.toLocaleString('pt-BR')}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={stockStatus.variant}>
-                    {stockStatus.label}
+                  <Badge variant={statusEstoque.variante}>
+                    {statusEstoque.rotulo}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-white">
-                  {isEditing ? (
+                  {estaEditando ? (
                     <Input
                       type="number"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
+                      value={valorEdicao}
+                      onChange={(e) => setValorEdicao(e.target.value)}
                       className="w-20 bg-gray-800 border-gray-600 text-white"
                       min="0"
                     />
                   ) : (
-                    <span className="font-medium">{product.stock_quantity}</span>
+                    <span className="font-medium">{produto.stock_quantity}</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  {isEditing ? (
+                  {estaEditando ? (
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleEditSave(product.id)}
+                        onClick={() => salvarEdicao(produto.id)}
                         className="text-green-400 hover:bg-green-400/10"
                       >
                         <Check className="h-4 w-4" />
@@ -218,7 +216,7 @@ export const StockTable = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={handleEditCancel}
+                        onClick={cancelarEdicao}
                         className="text-red-400 hover:bg-red-400/10"
                       >
                         <X className="h-4 w-4" />
@@ -228,7 +226,7 @@ export const StockTable = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleEditStart(product.id, product.stock_quantity)}
+                      onClick={() => iniciarEdicao(produto.id, produto.stock_quantity)}
                       className="text-blue-400 hover:bg-blue-400/10"
                     >
                       <Pencil className="h-4 w-4" />

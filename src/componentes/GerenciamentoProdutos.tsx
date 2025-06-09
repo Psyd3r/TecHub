@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ProductForm } from "./ProductForm";
+import { ProductForm } from "../components/ProductForm";
 import { Plus, Pencil, Trash2, Package } from "lucide-react";
 import {
   Table,
@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface Product {
+interface Produto {
   id: string;
   name: string;
   price: number;
@@ -29,16 +29,16 @@ interface Product {
   in_stock: boolean;
 }
 
-export const ProductManagement = () => {
+export const GerenciamentoProdutos = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [formularioAberto, setFormularioAberto] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState<Produto | undefined>();
 
-  const fetchProducts = async () => {
+  const buscarProdutos = async () => {
     try {
-      setLoading(true);
+      setCarregando(true);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -46,7 +46,7 @@ export const ProductManagement = () => {
       
       if (error) throw error;
       
-      setProducts(data || []);
+      setProdutos(data || []);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       toast({
@@ -55,32 +55,32 @@ export const ProductManagement = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    buscarProdutos();
   }, []);
 
-  const handleCreateProduct = () => {
-    setEditingProduct(undefined);
-    setIsFormOpen(true);
+  const manipularCriarProduto = () => {
+    setProdutoEditando(undefined);
+    setFormularioAberto(true);
   };
 
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setIsFormOpen(true);
+  const manipularEditarProduto = (produto: Produto) => {
+    setProdutoEditando(produto);
+    setFormularioAberto(true);
   };
 
-  const handleDeleteProduct = async (productId: string) => {
+  const manipularExcluirProduto = async (idProduto: string) => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
     
     try {
       const { error } = await supabase
         .from('products')
         .delete()
-        .eq('id', productId);
+        .eq('id', idProduto);
       
       if (error) throw error;
       
@@ -89,7 +89,7 @@ export const ProductManagement = () => {
         description: "O produto foi excluído com sucesso.",
       });
       
-      fetchProducts();
+      buscarProdutos();
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
       toast({
@@ -100,13 +100,13 @@ export const ProductManagement = () => {
     }
   };
 
-  const handleFormSuccess = () => {
-    setIsFormOpen(false);
-    setEditingProduct(undefined);
-    fetchProducts();
+  const manipularSucessoFormulario = () => {
+    setFormularioAberto(false);
+    setProdutoEditando(undefined);
+    buscarProdutos();
   };
 
-  if (loading) {
+  if (carregando) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-white">Carregando produtos...</div>
@@ -123,7 +123,7 @@ export const ProductManagement = () => {
             Gerenciar Produtos
           </CardTitle>
           <Button 
-            onClick={handleCreateProduct}
+            onClick={manipularCriarProduto}
             className="bg-[#4ADE80] text-black hover:bg-[#22C55E]"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -132,7 +132,7 @@ export const ProductManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {products.length === 0 ? (
+        {produtos.length === 0 ? (
           <div className="text-center py-12">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">Nenhum produto cadastrado</h3>
@@ -140,7 +140,7 @@ export const ProductManagement = () => {
               Comece criando seu primeiro produto para o catálogo.
             </p>
             <Button 
-              onClick={handleCreateProduct}
+              onClick={manipularCriarProduto}
               className="bg-[#4ADE80] text-black hover:bg-[#22C55E]"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -159,32 +159,32 @@ export const ProductManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id} className="border-gray-700">
+                {produtos.map((produto) => (
+                  <TableRow key={produto.id} className="border-gray-700">
                     <TableCell className="text-white">
                       <div className="flex items-center gap-3">
-                        {product.image && (
+                        {produto.image && (
                           <img
-                            src={product.image.startsWith('http') ? product.image : `https://images.unsplash.com/${product.image}?w=50&h=50&fit=crop`}
-                            alt={product.name}
+                            src={produto.image.startsWith('http') ? produto.image : `https://images.unsplash.com/${produto.image}?w=50&h=50&fit=crop`}
+                            alt={produto.name}
                             className="w-10 h-10 rounded-md object-cover"
                           />
                         )}
                         <div>
-                          <p className="font-medium">{product.name}</p>
+                          <p className="font-medium">{produto.name}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-300">{product.category}</TableCell>
+                    <TableCell className="text-gray-300">{produto.category}</TableCell>
                     <TableCell className="text-green-400 font-medium">
-                      R$ {product.price.toLocaleString('pt-BR')}
+                      R$ {produto.price.toLocaleString('pt-BR')}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleEditProduct(product)}
+                          onClick={() => manipularEditarProduto(produto)}
                           className="text-blue-400 hover:bg-blue-400/10"
                         >
                           <Pencil className="h-4 w-4" />
@@ -192,7 +192,7 @@ export const ProductManagement = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeleteProduct(product.id)}
+                          onClick={() => manipularExcluirProduto(produto.id)}
                           className="text-red-400 hover:bg-red-400/10"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -206,17 +206,17 @@ export const ProductManagement = () => {
           </div>
         )}
 
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <Dialog open={formularioAberto} onOpenChange={setFormularioAberto}>
           <DialogContent className="bg-[#1B1B1B] border-gray-700 max-w-4xl">
             <DialogHeader>
               <DialogTitle className="text-white">
-                {editingProduct ? "Editar Produto" : "Novo Produto"}
+                {produtoEditando ? "Editar Produto" : "Novo Produto"}
               </DialogTitle>
             </DialogHeader>
             <ProductForm
-              product={editingProduct}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setIsFormOpen(false)}
+              product={produtoEditando}
+              onSuccess={manipularSucessoFormulario}
+              onCancel={() => setFormularioAberto(false)}
             />
           </DialogContent>
         </Dialog>

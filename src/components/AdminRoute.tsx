@@ -1,6 +1,6 @@
 
 import { useUserRole } from '@/hooks/useUserRole';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/stores/AuthStore';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
@@ -9,7 +9,7 @@ interface AdminRouteProps {
 }
 
 export const AdminRoute = ({ children }: AdminRouteProps) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuthStore();
   const { isAdmin, loading: roleLoading } = useUserRole();
 
   if (authLoading || roleLoading) {

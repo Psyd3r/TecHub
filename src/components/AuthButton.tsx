@@ -1,9 +1,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogIn, LogOut, User, Settings } from "lucide-react";
+import { LogIn, LogOut, User, Settings, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/AuthStore";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ import {
 
 export const AuthButton = () => {
   const navigate = useNavigate();
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useAuthStore();
   const { isAdmin } = useUserRole();
   const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -93,8 +93,16 @@ export const AuthButton = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-[#1B1B1B] border-white/10">
+              <DropdownMenuItem 
+                onClick={() => navigate("/orders")}
+                className="text-white hover:bg-white/10 cursor-pointer"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                Meus Pedidos
+              </DropdownMenuItem>
               {isAdmin && (
                 <>
+                  <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem 
                     onClick={() => navigate("/admin")}
                     className="text-white hover:bg-white/10 cursor-pointer"
@@ -102,9 +110,9 @@ export const AuthButton = () => {
                     <Settings className="h-4 w-4 mr-2" />
                     Painel Administrativo
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-white/10" />
                 </>
               )}
+              <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem 
                 onClick={handleSignOut}
                 className="text-white hover:bg-white/10 cursor-pointer"

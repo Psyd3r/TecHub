@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Search, Filter } from "lucide-react";
+import { PRODUCT_CATEGORIES, getCategoryNames } from "@/constants/categories";
 
 interface ProductFiltersProps {
   searchTerm: string;
@@ -20,8 +21,6 @@ interface ProductFiltersProps {
   setShowInStock: (show: boolean) => void;
 }
 
-const categories = ["Todos", "Smartphones", "Notebooks", "Tablets", "Acessórios", "Smartwatches"];
-
 export const ProductFilters = ({
   searchTerm,
   setSearchTerm,
@@ -34,6 +33,8 @@ export const ProductFilters = ({
   showInStock,
   setShowInStock
 }: ProductFiltersProps) => {
+  const categories = getCategoryNames();
+
   return (
     <Card className="bg-gray-900/50 border-gray-800 sticky top-4">
       <CardHeader>
@@ -65,12 +66,22 @@ export const ProductFilters = ({
             <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
+            <SelectContent className="bg-gray-800 border-gray-700">
+              {PRODUCT_CATEGORIES.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <SelectItem 
+                    key={category.id} 
+                    value={category.name}
+                    className="text-white hover:bg-gray-700 focus:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <IconComponent className="h-4 w-4 text-[#4ADE80]" />
+                      <span>{category.name}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
@@ -97,11 +108,11 @@ export const ProductFilters = ({
             <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="relevance">Relevância</SelectItem>
-              <SelectItem value="price-asc">Menor Preço</SelectItem>
-              <SelectItem value="price-desc">Maior Preço</SelectItem>
-              <SelectItem value="name">Nome A-Z</SelectItem>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectItem value="relevance" className="text-white hover:bg-gray-700">Relevância</SelectItem>
+              <SelectItem value="price-asc" className="text-white hover:bg-gray-700">Menor Preço</SelectItem>
+              <SelectItem value="price-desc" className="text-white hover:bg-gray-700">Maior Preço</SelectItem>
+              <SelectItem value="name" className="text-white hover:bg-gray-700">Nome A-Z</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -1,28 +1,32 @@
 
 import { useState } from 'react';
-import { ShoppingBag, Plus, Minus, Trash2, X } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useCart } from '@/contexts/CartContext';
+import { useCartStore } from '@/stores/CartStore';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 export const CartDrawer = () => {
-  const { items, removeItem, updateQuantity, getTotalItems, getTotalPrice, getProductStock } = useCart();
+  const { 
+    items, 
+    totalItems, 
+    totalPrice, 
+    removeItem, 
+    updateQuantity, 
+    getProductStock 
+  } = useCartStore();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const totalItems = getTotalItems();
-  const totalPrice = getTotalPrice();
 
   const handleCheckout = () => {
     setIsOpen(false);
     navigate('/checkout');
   };
 
-  const handleUpdateQuantity = (id: number, newQuantity: number) => {
-    const success = updateQuantity(id, newQuantity);
+  const handleUpdateQuantity = async (id: number, newQuantity: number) => {
+    const success = await updateQuantity(id, newQuantity);
     if (!success && newQuantity > 0) {
       toast({
         title: "Estoque insuficiente",
@@ -30,6 +34,14 @@ export const CartDrawer = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleRemoveItem = (id: number) => {
+    removeItem(id);
+    toast({
+      title: "Item removido",
+      description: "O produto foi removido do carrinho.",
+    });
   };
 
   return (
@@ -71,20 +83,20 @@ export const CartDrawer = () => {
                     <div key={item.id} className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
                       <div className="flex gap-3">
                         <img 
-                          src={`https://images.unsplash.com/${item.image}?w=80&h=80&fit=crop`}
+                          src={item.image.startsWith('http') ? item.image : `https://images.unsplash.com/${item.image}?w=80&h=80&fit=crop`}
                           alt={item.name}
                           className="w-16 h-16 object-cover rounded"
                         />
                         <div className="flex-1">
                           <h3 className="text-white font-medium text-sm mb-1">{item.name}</h3>
                           <p className="text-gray-400 text-xs mb-1">{item.brand}</p>
-                          <p className="text-[#4ADE80] font-semibold">R$ {item.price.toLocaleString('pt-BR')}</p>
+                          <p className="text-[#4ADE80] font-semibold">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                           <p className="text-xs text-gray-500 mt-1">
                             Estoque: {maxQuantity} unidades
                           </p>
                         </div>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                           className="text-gray-400 hover:text-red-400 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -113,7 +125,7 @@ export const CartDrawer = () => {
                           </button>
                         </div>
                         <p className="text-white font-semibold">
-                          R$ {(item.price * item.quantity).toLocaleString('pt-BR')}
+                          R$ {(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                     </div>
@@ -125,7 +137,7 @@ export const CartDrawer = () => {
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-lg font-semibold text-white">Total:</span>
                   <span className="text-xl font-bold text-[#4ADE80]">
-                    R$ {totalPrice.toLocaleString('pt-BR')}
+                    R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <Button 

@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/stores/AuthStore';
 import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 'admin' | 'customer';
 
 export const useUserRole = () => {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 

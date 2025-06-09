@@ -1,163 +1,239 @@
 
 import { useState, useEffect } from "react";
-import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useNavigate } from "react-router-dom";
-import { CartDrawer } from "./CartDrawer";
-import { useCart } from "@/contexts/CartContext";
+import { ShoppingCart, User, Package, Menu, X, Settings } from "lucide-react";
+import { PiDetectiveBold } from "react-icons/pi";
+import { useCartStore } from "@/stores/CartStore";
+import { useAuthStore } from "@/stores/AuthStore";
 import { useUserRole } from "@/hooks/useUserRole";
+import { CartDrawer } from "./CartDrawer";
 import { AuthButton } from "./AuthButton";
+import { useNavigate, Link } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const Navbar = () => {
+  const { totalItems } = useCartStore();
+  const { user } = useAuthStore();
+  const { isAdmin } = useUserRole();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { getTotalItems } = useCart();
-  const { isAdmin } = useUserRole();
+  const [isAnimatingHome, setIsAnimatingHome] = useState(false);
   const navigate = useNavigate();
 
-  const cartItems = getTotalItems();
-
+  // Detect scroll position
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
+      setIsScrolled(window.scrollY > 50);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
+  // Navigation links
+  const navLinks = [
+    { href: "/", label: "Início" },
+    { href: "/#produtos", label: "Produtos" },
+  ];
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  const handleNavClick = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (href === "/") {
+      // Animação especial para navegação ao início
+      setIsAnimatingHome(true);
+      scrollToTop();
+      
+      // Remove a animação após 600ms
+      setTimeout(() => {
+        setIsAnimatingHome(false);
+      }, 600);
+    } else if (href.startsWith("/#")) {
+      // Handle anchor links
+      const element = document.querySelector(href.substring(1));
+      if (element) {
+        const navbarHeight = 80; // Account for navbar height
+        const elementPosition = (element as HTMLElement).offsetTop - navbarHeight;
+        window.scrollTo({
+          top: elementPosition,
+          behavior: "smooth"
+        });
+      }
+    } else {
+      // Handle regular navigation
+      navigate(href);
     }
+    
+    // Close mobile menu
     setIsMobileMenuOpen(false);
   };
 
-  const scrollToProducts = () => {
-    scrollToSection('produtos');
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsAnimatingHome(true);
+    scrollToTop();
+    
+    // Remove a animação após 600ms
+    setTimeout(() => {
+      setIsAnimatingHome(false);
+    }, 600);
+    
+    // Close mobile menu if open
+    setIsMobileMenuOpen(false);
   };
 
   return (
-    <nav 
-      className={`fixed top-3.5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 rounded-full ${
-        isScrolled
-          ? 'bg-[#1B1B1B]/40 backdrop-blur-xl border border-white/10 scale-95 w-[90%] max-w-4xl'
-          : 'bg-[#1B1B1B] w-[95%] max-w-6xl'
-      } h-14`}
-    >
-      <div className="flex items-center justify-between h-full px-6">
-        {/* Logo */}
-        <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-          <ShoppingCart className="h-6 w-6 text-[#4ADE80]" />
-          <span className="text-xl font-bold text-white">TechHub</span>
-        </div>
-
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <button 
-            onClick={() => scrollToSection('home')}
-            className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
-          >
-            Início
-          </button>
-          <button 
-            onClick={scrollToProducts}
-            className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
-          >
-            Produtos
-          </button>
-          {isAdmin && (
+    <>
+      <nav 
+        className={`fixed top-3.5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 rounded-full ${
+          isScrolled
+            ? "w-[90%] max-w-4xl bg-[#1B1B1B]/40 backdrop-blur-xl border border-white/10 scale-95"
+            : "w-[95%] max-w-6xl bg-[#1B1B1B] scale-100"
+        }`}
+      >
+        <div className="px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            {/* Logo com PiDetectiveBold */}
             <button 
-              onClick={() => navigate('/admin')}
-              className="text-white/80 hover:text-white transition-colors duration-200 font-medium"
+              onClick={handleLogoClick}
+              className={`flex items-center space-x-2 flex-shrink-0 transition-all duration-300 ${
+                isAnimatingHome ? 'animate-bounce scale-110' : 'hover:scale-105'
+              }`}
             >
-              Admin
+              <div className={`w-8 h-8 bg-gradient-to-r from-[#4ADE80] to-[#22C55E] rounded-lg flex items-center justify-center transition-all duration-300 ${
+                isAnimatingHome ? 'animate-pulse shadow-lg shadow-[#4ADE80]/50' : ''
+              }`}>
+                <PiDetectiveBold className="h-5 w-5 text-black" />
+              </div>
+              <span className={`text-white font-bold text-xl transition-all duration-300 ${
+                isAnimatingHome ? 'text-[#4ADE80] animate-pulse' : ''
+              }`}>
+                TechHub
+              </span>
             </button>
-          )}
-        </div>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          {/* Cart */}
-          <CartDrawer />
-          
-          {/* Auth Button */}
-          <AuthButton />
-        </div>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleNavClick(link.href, e)}
+                  className={`text-muted-foreground hover:text-foreground transition-all duration-300 text-sm font-medium cursor-pointer ${
+                    link.href === "/" && isAnimatingHome ? 'text-[#4ADE80] animate-pulse scale-110' : ''
+                  } ${link.href === "/" ? 'hover:text-[#4ADE80] hover:scale-105' : ''}`}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
 
-        {/* Mobile Menu */}
-        <div className="md:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/10 rounded-full"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent 
-              side="right" 
-              className="w-[300px] bg-[#1B1B1B]/95 backdrop-blur-xl border-l border-white/10"
-            >
-              <div className="flex flex-col space-y-6 mt-8">
-                <div className="flex items-center space-x-2 px-4">
-                  <ShoppingCart className="h-6 w-6 text-[#4ADE80]" />
-                  <span className="text-xl font-bold text-white">TechHub</span>
-                </div>
-                
-                {/* Mobile Navigation Links */}
-                <div className="flex flex-col space-y-4 px-4">
-                  <button 
-                    onClick={() => scrollToSection('home')}
-                    className="text-left text-white/80 hover:text-white transition-colors duration-200 font-medium py-2"
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center space-x-4">
+              {/* Admin shortcut */}
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/admin")}
+                  className="text-white hover:bg-white/10"
+                  title="Painel Administrativo"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
+              <CartDrawer />
+              <AuthButton />
+            </div>
+
+            {/* Mobile Menu */}
+            <div className="md:hidden flex items-center space-x-2">
+              <CartDrawer />
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/10 p-2"
                   >
-                    Início
-                  </button>
-                  <button 
-                    onClick={scrollToProducts}
-                    className="text-left text-white/80 hover:text-white transition-colors duration-200 font-medium py-2"
-                  >
-                    Produtos
-                  </button>
-                  {isAdmin && (
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent 
+                  side="right" 
+                  className="w-[300px] bg-[#1B1B1B] border-white/10"
+                >
+                  <div className="flex flex-col space-y-6 mt-8">
+                    {/* Mobile Logo com PiDetectiveBold */}
                     <button 
-                      onClick={() => navigate('/admin')}
-                      className="text-left text-white/80 hover:text-white transition-colors duration-200 font-medium py-2"
+                      onClick={handleLogoClick}
+                      className={`flex items-center space-x-2 px-2 transition-all duration-300 ${
+                        isAnimatingHome ? 'animate-bounce scale-110' : 'hover:scale-105'
+                      }`}
                     >
-                      Admin
+                      <div className={`w-8 h-8 bg-gradient-to-r from-[#4ADE80] to-[#22C55E] rounded-lg flex items-center justify-center transition-all duration-300 ${
+                        isAnimatingHome ? 'animate-pulse shadow-lg shadow-[#4ADE80]/50' : ''
+                      }`}>
+                        <PiDetectiveBold className="h-5 w-5 text-black" />
+                      </div>
+                      <span className={`text-white font-bold text-xl transition-all duration-300 ${
+                        isAnimatingHome ? 'text-[#4ADE80] animate-pulse' : ''
+                      }`}>
+                        TechHub
+                      </span>
                     </button>
-                  )}
-                  
-                  {/* Mobile Cart */}
-                  <div className="flex items-center justify-between text-white/80 hover:text-white transition-colors duration-200 font-medium py-2">
-                    <span>Carrinho</span>
-                    <div className="relative">
-                      <ShoppingCart className="h-5 w-5" />
-                      {cartItems > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-[#4ADE80] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                          {cartItems}
-                        </span>
+
+                    {/* Mobile Navigation Links */}
+                    <div className="flex flex-col space-y-4">
+                      {navLinks.map((link) => (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          onClick={(e) => handleNavClick(link.href, e)}
+                          className={`text-white hover:text-[#4ADE80] transition-all duration-300 text-lg font-medium px-2 py-2 cursor-pointer ${
+                            link.href === "/" && isAnimatingHome ? 'text-[#4ADE80] animate-pulse scale-105' : ''
+                          } ${link.href === "/" ? 'hover:scale-105' : ''}`}
+                        >
+                          {link.label}
+                        </a>
+                      ))}
+                      
+                      {/* Admin shortcut mobile */}
+                      {isAdmin && (
+                        <button
+                          onClick={() => {
+                            navigate("/admin");
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className="text-white hover:text-[#4ADE80] transition-colors duration-200 text-lg font-medium px-2 py-2 flex items-center gap-2"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Painel Admin
+                        </button>
                       )}
                     </div>
+
+                    {/* Mobile Auth */}
+                    <div className="px-2 pt-4 border-t border-white/10">
+                      <AuthButton />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="px-4 pt-4 border-t border-white/10">
-                  <AuthButton />
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Spacer to prevent content from hiding behind fixed navbar */}
+      <div className="h-20" />
+    </>
   );
 };
