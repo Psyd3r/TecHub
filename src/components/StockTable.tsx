@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { ProductController } from "@/controllers/ProductController";
+import { ProductModel } from "@/models/ProductModel";
 import {
   Table,
   TableBody,
@@ -14,19 +16,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Check, X, Package } from "lucide-react";
 
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  brand: string;
-  price: number;
-  stock_quantity: number;
-  image?: string;
-}
-
 export const StockTable = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
@@ -34,14 +26,8 @@ export const StockTable = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      setProducts(data || []);
+      const data = await ProductController.getAllProducts();
+      setProducts(data);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       toast({
@@ -77,21 +63,13 @@ export const StockTable = () => {
     try {
       console.log(`Atualizando estoque do produto ${productId} para ${newStock}`);
       
-      const { error } = await supabase
-        .from('products')
-        .update({ stock_quantity: newStock })
-        .eq('id', productId);
-
-      if (error) {
-        console.error('Erro ao atualizar estoque:', error);
-        throw error;
-      }
+      await ProductController.updateStock(productId, newStock);
 
       // Atualizar o estado local
       setProducts(prev => 
         prev.map(product => 
           product.id === productId 
-            ? { ...product, stock_quantity: newStock }
+            ? { ...product, stockQuantity: newStock, inStock: newStock > 0 }
             : product
         )
       );
@@ -116,12 +94,6 @@ export const StockTable = () => {
   const handleEditCancel = () => {
     setEditingId(null);
     setEditValue("");
-  };
-
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: "Sem Estoque", variant: "destructive" as const };
-    if (stock <= 3) return { label: "Baixo Estoque", variant: "outline" as const };
-    return { label: "Em Estoque", variant: "default" as const };
   };
 
   if (loading) {
@@ -160,7 +132,7 @@ export const StockTable = () => {
         </TableHeader>
         <TableBody>
           {products.map((product) => {
-            const stockStatus = getStockStatus(product.stock_quantity);
+            const stockStatus = ProductController.getStockStatus(product.stockQuantity);
             const isEditing = editingId === product.id;
 
             return (
@@ -182,7 +154,7 @@ export const StockTable = () => {
                 <TableCell className="text-gray-300">{product.category}</TableCell>
                 <TableCell className="text-gray-300">{product.brand}</TableCell>
                 <TableCell className="text-green-400 font-medium">
-                  R$ {product.price.toLocaleString('pt-BR')}
+                  {ProductController.formatPrice(product.price)}
                 </TableCell>
                 <TableCell>
                   <Badge variant={stockStatus.variant}>
@@ -199,7 +171,7 @@ export const StockTable = () => {
                       min="0"
                     />
                   ) : (
-                    <span className="font-medium">{product.stock_quantity}</span>
+                    <span className="font-medium">{product.stockQuantity}</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -226,7 +198,7 @@ export const StockTable = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleEditStart(product.id, product.stock_quantity)}
+                      onClick={() => handleEditStart(product.id, product.stockQuantity)}
                       className="text-blue-400 hover:bg-blue-400/10"
                     >
                       <Pencil className="h-4 w-4" />

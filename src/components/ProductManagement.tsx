@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { ProductController } from "@/controllers/ProductController";
+import { ProductModel } from "@/models/ProductModel";
 import { ProductForm } from "./ProductForm";
 import { Plus, Pencil, Trash2, Package } from "lucide-react";
 import {
@@ -16,37 +17,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  original_price?: number;
-  description?: string;
-  image?: string;
-  category: string;
-  brand: string;
-  stock_quantity: number;
-  in_stock: boolean;
-}
-
 export const ProductManagement = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const [editingProduct, setEditingProduct] = useState<ProductModel | undefined>();
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      setProducts(data || []);
+      const data = await ProductController.getAllProducts();
+      setProducts(data);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       toast({
@@ -68,7 +50,7 @@ export const ProductManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = (product: ProductModel) => {
     setEditingProduct(product);
     setIsFormOpen(true);
   };
@@ -77,12 +59,7 @@ export const ProductManagement = () => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
     
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-      
-      if (error) throw error;
+      await ProductController.deleteProduct(productId);
       
       toast({
         title: "Produto excluído!",
@@ -177,7 +154,7 @@ export const ProductManagement = () => {
                     </TableCell>
                     <TableCell className="text-gray-300">{product.category}</TableCell>
                     <TableCell className="text-green-400 font-medium">
-                      R$ {product.price.toLocaleString('pt-BR')}
+                      {ProductController.formatPrice(product.price)}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

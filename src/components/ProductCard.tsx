@@ -3,13 +3,14 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "@/stores/CartStore";
 import { useToast } from "@/hooks/use-toast";
+import { ProductController } from "@/controllers/ProductController";
 
 interface Product {
   id: number;
   name: string;
   price: number;
   originalPrice?: number;
-  image: string;
+  image?: string;
   category: string;
   brand: string;
   inStock: boolean;
@@ -27,11 +28,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   
   const discount = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? ProductController.calculateDiscountPercentage(product.originalPrice, product.price)
     : 0;
 
   const inCartQuantity = getProductQuantity(product.id);
   const availableStock = getAvailableStock(product.id);
+  const isAvailable = ProductController.isProductAvailable({
+    ...product,
+    id: product.uuid || product.id.toString(),
+    stockQuantity: product.stockQuantity,
+    inStock: product.inStock
+  });
 
   const handleCardClick = () => {
     const productId = product.uuid || product.id;
@@ -40,8 +47,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (product.inStock && availableStock > 0) {
-      const success = await addToCart(product);
+    if (isAvailable && availableStock > 0) {
+      // Ensure image has a default value to match the expected type
+      const productForCart = {
+        ...product,
+        image: product.image || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop'
+      };
+      
+      const success = await addToCart(productForCart);
       if (success) {
         toast({
           title: "Produto adicionado!",
@@ -57,11 +70,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
+  const imageUrl = product.image?.startsWith('http') 
+    ? product.image 
+    : `https://images.unsplash.com/${product.image || 'photo-1486312338219-ce68d2c6f44d'}?w=400&h=300&fit=crop`;
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 bg-gray-900/50 border-gray-800 overflow-hidden cursor-pointer" onClick={handleCardClick}>
       <div className="relative">
         <img 
-          src={product.image.startsWith('http') ? product.image : `https://images.unsplash.com/${product.image}?w=400&h=300&fit=crop`}
+          src={imageUrl}
           alt={product.name}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -90,11 +107,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg font-bold text-[#4ADE80]">
-            R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {ProductController.formatPrice(product.price)}
           </span>
           {product.originalPrice && (
             <span className="text-sm text-gray-500 line-through">
-              R$ {product.originalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {ProductController.formatPrice(product.originalPrice)}
             </span>
           )}
         </div>
@@ -117,14 +134,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <CardFooter className="p-4 pt-0">
         <button 
           className={`w-full py-2 rounded-lg font-medium transition-all duration-300 ${
-            product.inStock && availableStock > 0
+            isAvailable && availableStock > 0
               ? 'bg-[#4ADE80] text-black hover:bg-[#22C55E] hover:scale-105'
               : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
-          disabled={!product.inStock || availableStock === 0}
+          disabled={!isAvailable || availableStock === 0}
           onClick={handleAddToCart}
         >
-          {product.inStock && availableStock > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}
+          {isAvailable && availableStock > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}
         </button>
       </CardFooter>
     </Card>

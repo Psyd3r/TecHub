@@ -3,6 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import { ProductCard } from "./ProductCard";
 import { ProductFilters } from "./ProductFilters";
 import { useCartStore } from "@/stores/CartStore";
+import { ProductController } from "@/controllers/ProductController";
+import { ProductFilters as ProductFiltersType } from "@/models/ProductModel";
 import { Package } from "lucide-react";
 import { PRODUCT_CATEGORIES } from "@/constants/categories";
 
@@ -19,32 +21,23 @@ export const ProductCatalog = () => {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      const matchesStock = !showInStock || product.inStock;
+    const filters: ProductFiltersType = {
+      searchTerm,
+      category: selectedCategory,
+      priceRange,
+      sortBy,
+      showInStock
+    };
 
-      return matchesSearch && matchesCategory && matchesPrice && matchesStock;
-    });
+    // Converter produtos do CartStore para o formato do ProductModel
+    const productsForFilter = products.map(product => ({
+      ...product,
+      id: product.uuid || product.id.toString(),
+      stockQuantity: product.stockQuantity,
+      inStock: product.inStock
+    }));
 
-    // Ordenação
-    switch (sortBy) {
-      case "price-asc":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      default:
-        // relevance - manter ordem original
-        break;
-    }
-
-    return filtered;
+    return ProductController.filterProducts(productsForFilter, filters);
   }, [products, searchTerm, selectedCategory, priceRange, sortBy, showInStock]);
 
   const getCategoryStats = () => {
@@ -143,7 +136,11 @@ export const ProductCatalog = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={{
+                      ...product,
+                      id: parseInt(product.id) || 0,
+                      uuid: product.id
+                    }} />
                   ))}
                 </div>
               )}

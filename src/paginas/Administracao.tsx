@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, Archive } from "lucide-react";
-import { TabelaEstoque } from "@/componentes/TabelaEstoque";
-import { GerenciamentoProdutos } from "@/componentes/GerenciamentoProdutos";
+import { StockTable } from "@/components/StockTable";
+import { ProductManagement } from "@/components/ProductManagement";
 import { AdminRoute } from "@/components/AdminRoute";
 
 const ConteudoAdministracao = () => {
@@ -46,7 +46,7 @@ const ConteudoAdministracao = () => {
           </TabsList>
 
           <TabsContent value="produtos">
-            <GerenciamentoProdutos />
+            <ProductManagement />
           </TabsContent>
 
           <TabsContent value="estoque">
@@ -58,7 +58,7 @@ const ConteudoAdministracao = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <TabelaEstoque />
+                <StockTable />
               </CardContent>
             </Card>
           </TabsContent>
