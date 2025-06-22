@@ -1,46 +1,27 @@
 
-import { OrderService, OrderData } from "@/services/OrderService";
-import { ProductService } from "@/services/ProductService";
+import { OrderModel, CreateOrderData, OrderModelValidator } from "@/models/OrderModel";
+import { OrderService } from "@/services/OrderService";
+
+interface OrderItem {
+  id: string;
+  uuid?: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  brand: string;
+  stockQuantity: number;
+}
 
 export class OrderController {
   static async processOrder(
-    userId: string, 
-    items: Array<{
-      id: number;
-      uuid?: string;
-      name: string;
-      price: number;
-      quantity: number;
-      image: string;
-      brand: string;
-      stockQuantity: number;
-    }>,
-    paymentData: { paymentType: string }
+    userId: string,
+    items: OrderItem[],
+    paymentData: any
   ): Promise<string> {
-    if (!userId) {
-      throw new Error('Usuário não autenticado');
-    }
-
     try {
-      console.log('Simulação acadêmica - validações de estoque mantidas para realismo do sistema');
-
-      // Verificar estoque disponível para cada item
-      for (const item of items) {
-        // Usar UUID se disponível, senão usar ID convertido para string
-        const productId = item.uuid || item.id.toString();
-        const product = await ProductService.getProductById(productId);
-        
-        if (!product) {
-          throw new Error(`Produto ${item.name} não encontrado`);
-        }
-        
-        if (product.stockQuantity < item.quantity) {
-          throw new Error(`Estoque insuficiente para ${item.name}. Disponível: ${product.stockQuantity}, Solicitado: ${item.quantity}`);
-        }
-      }
-
-      // Criar pedido
-      const orderNumber = await OrderService.createOrder({
+      // Validar dados do pedido
+      const orderData: CreateOrderData = {
         userId,
         items: items.map(item => ({
           id: item.id,
@@ -50,51 +31,103 @@ export class OrderController {
           image: item.image,
           brand: item.brand
         })),
-        paymentData
-      });
+        paymentMethod: paymentData.method,
+        totalAmount: items.reduce((total, item) => total + (item.price * item.quantity), 0)
+      };
 
-      // Atualizar estoque após criar o pedido - CORREÇÃO DO BUG
-      for (const item of items) {
-        const productId = item.uuid || item.id.toString();
-        
-        // Buscar o produto atual para obter o estoque atualizado
-        const product = await ProductService.getProductById(productId);
-        
-        if (product) {
-          // Calcular o novo estoque: estoque atual - quantidade comprada
-          const newStockQuantity = product.stockQuantity - item.quantity;
-          console.log(`Atualizando estoque do produto ${item.name}: ${product.stockQuantity} - ${item.quantity} = ${newStockQuantity}`);
-          
-          // Garantir que o estoque não fique negativo
-          const finalStock = Math.max(0, newStockQuantity);
-          
-          await ProductService.updateStock(productId, finalStock);
-        }
+      const validationErrors = OrderModelValidator.validateCreateData(orderData);
+      if (validationErrors.length > 0) {
+        throw new Error(validationErrors.join(', '));
       }
 
-      console.log(`Pedido criado com sucesso: ${orderNumber}`);
+      // Processar pedido através do serviço
+      const orderNumber = await OrderService.createOrder({
+        userId: orderData.userId,
+        items: orderData.items.map(item => ({
+          id: parseInt(item.id) || 0, // Convert string to number for service compatibility
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          brand: item.brand
+        })),
+        paymentData: { paymentType: orderData.paymentMethod }
+      });
+      
       return orderNumber;
     } catch (error) {
       console.error('Erro ao processar pedido:', error);
-      throw error;
+      throw new Error('Erro ao processar pedido');
     }
   }
 
-  static async getUserOrders(userId: string): Promise<OrderData[]> {
+  static async getUserOrders(userId: string): Promise<OrderModel[]> {
     try {
-      return await OrderService.getUserOrders(userId);
+      const orderData = await OrderService.getUserOrders(userId);
+      return orderData.map(order => ({
+        orderNumber: order.orderNumber,
+        userId,
+        items: order.items.map(item => ({
+          id: item.id.toString(), // Convert number to string for model compatibility
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          brand: item.brand
+        })),
+        totalAmount: order.totalAmount,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        createdAt: order.createdAt
+      }));
     } catch (error) {
-      console.error('Erro ao buscar pedidos do usuário:', error);
-      throw error;
+      console.error('Erro ao buscar pedidos:', error);
+      throw new Error('Erro ao buscar pedidos do usuário');
     }
   }
 
-  static async getOrderByNumber(orderNumber: string): Promise<OrderData | null> {
+  static async getOrderByNumber(orderNumber: string): Promise<OrderModel | null> {
     try {
-      return await OrderService.getOrderByNumber(orderNumber);
+      const orderData = await OrderService.getOrderByNumber(orderNumber);
+      if (!orderData) return null;
+
+      return {
+        orderNumber: orderData.orderNumber,
+        userId: '', // Will be filled by the service if needed
+        items: orderData.items.map(item => ({
+          id: item.id.toString(), // Convert number to string for model compatibility
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          brand: item.brand
+        })),
+        totalAmount: orderData.totalAmount,
+        paymentMethod: orderData.paymentMethod,
+        paymentStatus: orderData.paymentStatus,
+        createdAt: orderData.createdAt
+      };
     } catch (error) {
       console.error('Erro ao buscar pedido:', error);
-      throw error;
+      throw new Error('Erro ao buscar pedido');
     }
+  }
+
+  static formatOrderNumber(orderNumber: string): string {
+    return orderNumber.toUpperCase();
+  }
+
+  static formatOrderDate(date: string): string {
+    return new Date(date).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  static formatOrderTotal(total: number): string {
+    return `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   }
 }

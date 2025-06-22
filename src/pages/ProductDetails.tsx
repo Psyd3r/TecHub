@@ -26,7 +26,7 @@ const ProductDetails = () => {
     return <ProductNotFound />;
   }
 
-  const inCartQuantity = items.find(item => item.id === parseInt(product.id))?.quantity || 0;
+  const inCartQuantity = items.find(item => item.id === product.id)?.quantity || 0;
   const availableStock = product.stock_quantity - inCartQuantity;
   
   // Criar array de imagens (por enquanto usando a mesma imagem)
@@ -75,7 +75,7 @@ const ProductDetails = () => {
                 />
 
                 <ProductActions
-                  productId={parseInt(product.id)}
+                  productId={product.id}
                   productName={product.name}
                   price={product.price}
                   isInStock={product.stock_quantity > 0}

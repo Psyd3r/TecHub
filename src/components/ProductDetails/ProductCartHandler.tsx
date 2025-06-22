@@ -30,8 +30,7 @@ export const ProductCartHandler = ({ product, children }: ProductCartHandlerProp
   const handleAddToCart = async () => {
     if (product && product.stock_quantity > 0) {
       const productForCart = {
-        id: parseInt(product.id),
-        uuid: product.id,
+        id: product.id, // Usar UUID diretamente
         name: product.name,
         price: product.price,
         originalPrice: product.original_price,
@@ -60,7 +59,7 @@ export const ProductCartHandler = ({ product, children }: ProductCartHandlerProp
 
   const handleUpdateQuantity = async (quantity: number) => {
     if (product) {
-      const success = await updateQuantity(parseInt(product.id), quantity);
+      const success = await updateQuantity(product.id, quantity);
       if (!success) {
         toast({
           title: "Estoque insuficiente",

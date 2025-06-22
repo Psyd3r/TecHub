@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProductController } from "@/controllers/ProductController";
 
 interface Product {
-  id: number;
+  id: string; // Mudança: usar string UUID
   name: string;
   price: number;
   originalPrice?: number;
@@ -35,14 +35,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const availableStock = getAvailableStock(product.id);
   const isAvailable = ProductController.isProductAvailable({
     ...product,
-    id: product.uuid || product.id.toString(),
+    id: product.id, // Usar UUID diretamente
     stockQuantity: product.stockQuantity,
     inStock: product.inStock
   });
 
   const handleCardClick = () => {
-    const productId = product.uuid || product.id;
-    navigate(`/produto/${productId}`);
+    navigate(`/produto/${product.id}`);
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {

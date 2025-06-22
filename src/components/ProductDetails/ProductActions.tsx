@@ -1,11 +1,11 @@
 
-import { useState } from 'react';
-import { ShoppingBag, Minus, Plus } from "lucide-react";
+import { useState } from "react";
+import { ShoppingCart, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useCartStore } from "@/stores/CartStore";
 
 interface ProductActionsProps {
-  productId: number;
+  productId: string; // Mudança: string em vez de number
   productName: string;
   price: number;
   isInStock: boolean;
@@ -15,91 +15,141 @@ interface ProductActionsProps {
   onUpdateQuantity: (quantity: number) => void;
 }
 
-export const ProductActions = ({ 
+export const ProductActions = ({
   productId,
   productName,
   price,
-  isInStock, 
+  isInStock,
   availableStock,
   inCartQuantity,
   onAddToCart,
-  onUpdateQuantity
+  onUpdateQuantity,
 }: ProductActionsProps) => {
   const [quantity, setQuantity] = useState(1);
 
-  const handleQuantityChange = (delta: number) => {
-    const newQuantity = Math.max(1, Math.min(quantity + delta, availableStock));
-    setQuantity(newQuantity);
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity >= 1 && newQuantity <= availableStock) {
+      setQuantity(newQuantity);
+    }
   };
 
-  const canAddToCart = isInStock && availableStock > 0;
+  const handleAddToCart = () => {
+    onAddToCart();
+    setQuantity(1);
+  };
+
+  const handleUpdateCartQuantity = (newQuantity: number) => {
+    if (newQuantity >= 0 && newQuantity <= availableStock) {
+      onUpdateQuantity(newQuantity);
+    }
+  };
+
+  if (!isInStock || availableStock === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+          <p className="text-red-400 text-center font-medium">
+            Produto fora de estoque
+          </p>
+        </div>
+        <Button 
+          disabled 
+          className="w-full bg-gray-700 text-gray-400 cursor-not-allowed"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Indisponível
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <Card className="p-6 bg-gray-900/50 border-gray-800 sticky top-4">
-      <div className="space-y-4">
-        {/* Quantity Selector */}
-        {canAddToCart && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Quantidade:</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
-                className="p-2 rounded-lg border border-gray-700 hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <span className="px-4 py-2 bg-gray-800 rounded-lg text-white font-medium min-w-[60px] text-center">
-                {quantity}
-              </span>
-              <button
-                onClick={() => handleQuantityChange(1)}
-                disabled={quantity >= availableStock}
-                className="p-2 rounded-lg border border-gray-700 hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Subtotal */}
-        {canAddToCart && (
-          <div className="flex justify-between items-center py-2 border-t border-gray-700">
-            <span className="text-gray-300">Subtotal:</span>
-            <span className="text-xl font-bold text-[#4ADE80]">
-              R$ {(price * quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+    <div className="space-y-6">
+      {/* Quantidade no Carrinho */}
+      {inCartQuantity > 0 && (
+        <div className="bg-[#4ADE80]/10 border border-[#4ADE80]/20 rounded-lg p-4">
+          <p className="text-[#4ADE80] text-sm mb-3">
+            {inCartQuantity} unidade{inCartQuantity > 1 ? 's' : ''} no carrinho
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleUpdateCartQuantity(inCartQuantity - 1)}
+              className="bg-gray-800 hover:bg-gray-700 text-white w-8 h-8 rounded flex items-center justify-center"
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+            <span className="text-white font-medium w-8 text-center">
+              {inCartQuantity}
             </span>
+            <button
+              onClick={() => handleUpdateCartQuantity(inCartQuantity + 1)}
+              disabled={inCartQuantity >= availableStock}
+              className={`w-8 h-8 rounded flex items-center justify-center ${
+                inCartQuantity >= availableStock
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-800 hover:bg-gray-700 text-white'
+              }`}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Add to Cart Button */}
-        <Button 
-          className={`w-full py-3 text-lg font-semibold rounded-lg transition-all duration-300 ${
-            canAddToCart
-              ? 'bg-[#4ADE80] text-black hover:bg-[#22C55E] hover:scale-105'
-              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          }`}
-          disabled={!canAddToCart}
-          onClick={() => {
-            for (let i = 0; i < quantity; i++) {
-              onAddToCart();
-            }
-          }}
-        >
-          <ShoppingBag className="h-5 w-5 mr-2" />
-          {canAddToCart ? 'Adicionar ao Carrinho' : 'Indisponível'}
-        </Button>
-
-        {/* Cart Info */}
-        {inCartQuantity > 0 && (
-          <div className="text-center p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-            <p className="text-yellow-400 text-sm">
-              Você já tem {inCartQuantity} unidade{inCartQuantity > 1 ? 's' : ''} no carrinho
-            </p>
-          </div>
-        )}
+      {/* Seletor de Quantidade */}
+      <div className="space-y-3">
+        <label className="text-white font-medium">Quantidade:</label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleQuantityChange(quantity - 1)}
+            disabled={quantity <= 1}
+            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              quantity <= 1
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-800 hover:bg-gray-700 text-white'
+            }`}
+          >
+            <Minus className="h-4 w-4" />
+          </button>
+          <span className="text-white font-semibold text-lg w-12 text-center">
+            {quantity}
+          </span>
+          <button
+            onClick={() => handleQuantityChange(quantity + 1)}
+            disabled={quantity >= availableStock}
+            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              quantity >= availableStock
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-800 hover:bg-gray-700 text-white'
+            }`}
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-gray-400 text-sm">
+          {availableStock} unidade{availableStock > 1 ? 's' : ''} disponível{availableStock > 1 ? 'eis' : ''}
+        </p>
       </div>
-    </Card>
+
+      {/* Preço Total */}
+      <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+        <div className="flex justify-between items-center">
+          <span className="text-gray-300">Total:</span>
+          <span className="text-2xl font-bold text-[#4ADE80]">
+            R$ {(price * quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+
+      {/* Botão Adicionar ao Carrinho */}
+      <Button 
+        onClick={handleAddToCart}
+        className="w-full bg-[#4ADE80] text-black hover:bg-[#22C55E] font-semibold text-lg py-6"
+        disabled={!isInStock || availableStock === 0}
+      >
+        <ShoppingCart className="h-5 w-5 mr-2" />
+        Adicionar ao Carrinho
+      </Button>
+    </div>
   );
 };

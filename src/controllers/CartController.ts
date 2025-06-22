@@ -1,3 +1,4 @@
+
 import { CartModel, CartItemModel, AddToCartData, UpdateCartItemData, CartModelValidator } from "@/models/CartModel";
 import { ProductModel } from "@/models/ProductModel";
 import { LocalStorageService } from "@/services/LocalStorageService";
@@ -44,7 +45,7 @@ export class CartController {
       } else {
         // Novo item no carrinho
         const newItem: CartItemModel = {
-          id: data.productId,
+          id: data.productId, // Usar string UUID
           name: product.name,
           price: product.price,
           image: product.image || '',
@@ -102,7 +103,7 @@ export class CartController {
     }
   }
   
-  static removeFromCart(productId: number): boolean {
+  static removeFromCart(productId: string): boolean { // Mudança: string em vez de number
     try {
       const currentCart = this.getCart();
       const filteredItems = currentCart.items.filter(item => item.id !== productId);
@@ -123,13 +124,13 @@ export class CartController {
     }
   }
   
-  static getProductQuantityInCart(productId: number): number {
+  static getProductQuantityInCart(productId: string): number { // Mudança: string em vez de number
     const cart = this.getCart();
     const item = cart.items.find(item => item.id === productId);
     return item ? item.quantity : 0;
   }
   
-  static getAvailableStock(productId: number, totalStock: number): number {
+  static getAvailableStock(productId: string, totalStock: number): number { // Mudança: string em vez de number
     const quantityInCart = this.getProductQuantityInCart(productId);
     return totalStock - quantityInCart;
   }

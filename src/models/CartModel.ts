@@ -1,6 +1,6 @@
 
 export interface CartItemModel {
-  id: number;
+  id: string; // Mudança: string em vez de number
   name: string;
   price: number;
   image: string;
@@ -18,12 +18,12 @@ export interface CartModel {
 }
 
 export interface AddToCartData {
-  productId: number;
+  productId: string; // Mudança: string em vez de number
   quantity: number;
 }
 
 export interface UpdateCartItemData {
-  productId: number;
+  productId: string; // Mudança: string em vez de number
   quantity: number;
 }
 
@@ -31,7 +31,7 @@ export class CartModelValidator {
   static validateAddToCart(data: AddToCartData): string[] {
     const errors: string[] = [];
     
-    if (!data.productId || data.productId <= 0) {
+    if (!data.productId || data.productId.trim().length === 0) {
       errors.push("ID do produto inválido");
     }
     
@@ -45,7 +45,7 @@ export class CartModelValidator {
   static validateUpdateCartItem(data: UpdateCartItemData): string[] {
     const errors: string[] = [];
     
-    if (!data.productId || data.productId <= 0) {
+    if (!data.productId || data.productId.trim().length === 0) {
       errors.push("ID do produto inválido");
     }
     

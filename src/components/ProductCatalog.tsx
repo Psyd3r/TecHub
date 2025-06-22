@@ -32,7 +32,7 @@ export const ProductCatalog = () => {
     // Converter produtos do CartStore para o formato do ProductModel
     const productsForFilter = products.map(product => ({
       ...product,
-      id: product.uuid || product.id.toString(),
+      id: product.id, // Usar UUID diretamente
       stockQuantity: product.stockQuantity,
       inStock: product.inStock
     }));
@@ -138,7 +138,7 @@ export const ProductCatalog = () => {
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={{
                       ...product,
-                      id: parseInt(product.id) || 0,
+                      id: product.id, // Usar UUID diretamente
                       uuid: product.id
                     }} />
                   ))}

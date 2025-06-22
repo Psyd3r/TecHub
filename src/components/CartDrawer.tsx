@@ -25,7 +25,7 @@ export const CartDrawer = () => {
     navigate('/checkout');
   };
 
-  const handleUpdateQuantity = async (id: number, newQuantity: number) => {
+  const handleUpdateQuantity = async (id: string, newQuantity: number) => {
     const success = await updateQuantity(id, newQuantity);
     if (!success && newQuantity > 0) {
       toast({
@@ -36,7 +36,7 @@ export const CartDrawer = () => {
     }
   };
 
-  const handleRemoveItem = (id: number) => {
+  const handleRemoveItem = (id: string) => {
     removeItem(id);
     toast({
       title: "Item removido",

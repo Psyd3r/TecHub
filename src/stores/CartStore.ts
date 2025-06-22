@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { CartModel, CartItemModel } from '@/models/CartModel';
 import { ProductModel } from '@/models/ProductModel';
@@ -6,7 +7,7 @@ import { ProductController } from '@/controllers/ProductController';
 import { OrderController } from '@/controllers/OrderController';
 
 interface Product {
-  id: number;
+  id: string; // Mudança: usar string UUID em vez de number
   name: string;
   price: number;
   originalPrice?: number;
@@ -31,13 +32,13 @@ interface CartStoreState extends CartModel {
   loadCart: () => void;
   loadProducts: () => Promise<void>;
   addToCart: (product: Product, quantity?: number) => Promise<boolean>;
-  updateQuantity: (productId: number, quantity: number) => Promise<boolean>;
-  removeItem: (productId: number) => void;
+  updateQuantity: (productId: string, quantity: number) => Promise<boolean>; // Mudança: string em vez de number
+  removeItem: (productId: string) => void; // Mudança: string em vez de number
   clearCart: () => void;
-  getProductQuantity: (productId: number) => number;
-  getAvailableStock: (productId: number) => number;
-  getProductStock: (productId: number) => number;
-  updateStock: (productId: number, newStock: number) => Promise<void>;
+  getProductQuantity: (productId: string) => number; // Mudança: string em vez de number
+  getAvailableStock: (productId: string) => number; // Mudança: string em vez de number
+  getProductStock: (productId: string) => number; // Mudança: string em vez de number
+  updateStock: (productId: string, newStock: number) => Promise<void>; // Mudança: string em vez de number
   processOrder: (paymentData: any, userId: string) => Promise<string>;
   clearError: () => void;
 }
@@ -71,9 +72,10 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
     try {
       const products = await ProductController.getAllProducts();
       
-      const formattedProducts = products.map((product, index) => ({
-        id: index + 1,
-        uuid: product.id,
+      // Correção: usar UUID como ID principal e manter consistência
+      const formattedProducts = products.map((product) => ({
+        id: product.id, // Usar UUID diretamente
+        uuid: product.id, // Manter compatibilidade
         name: product.name,
         price: product.price,
         originalPrice: product.originalPrice,
@@ -245,13 +247,13 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
   updateStock: async (productId, newStock) => {
     const { products } = get();
     const product = products.find(p => p.id === productId);
-    if (!product?.uuid) {
-      console.error('UUID do produto não encontrado');
+    if (!product) {
+      console.error('Produto não encontrado');
       return;
     }
 
     try {
-      await ProductController.updateStock(product.uuid, newStock);
+      await ProductController.updateStock(product.id, newStock);
       
       // Atualizar estado local
       set(state => ({
@@ -296,12 +298,12 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
     const { items, products } = get();
     
     try {
-      // Mapear itens com UUID para validação de estoque
-      const itemsWithUuid = items.map(item => {
+      // Mapear itens com UUID string para processamento do pedido
+      const itemsForOrder = items.map(item => {
         const product = products.find(p => p.id === item.id);
         return {
-          id: item.id,
-          uuid: product?.uuid,
+          id: item.id, // Manter como string UUID
+          uuid: item.id, // UUID é o mesmo que id agora
           name: item.name,
           price: item.price,
           quantity: item.quantity,
@@ -313,7 +315,7 @@ export const useCartStore = create<CartStoreState>((set, get) => ({
 
       const orderNumber = await OrderController.processOrder(
         userId,
-        itemsWithUuid,
+        itemsForOrder,
         paymentData
       );
 
